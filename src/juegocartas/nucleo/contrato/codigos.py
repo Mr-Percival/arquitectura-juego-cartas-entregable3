@@ -5,6 +5,7 @@ from .modelo import Carta, Pinta
 
 RANGOS = {1: "A", 11: "J", 12: "Q", 13: "K"}
 COMODIN = "JK"
+SIMBOLOS = {Pinta.CORAZONES: "♥", Pinta.DIAMANTES: "♦", Pinta.TREBOLES: "♣", Pinta.PICAS: "♠"}
 
 
 def codigo(carta: Carta) -> str:
@@ -21,3 +22,10 @@ def desde_codigo(texto: str, mazo: int = 1) -> Carta:
     if not 1 <= numero <= 13:
         raise ValueError(texto)
     return Carta(numero, Pinta(pinta), mazo)
+
+
+def etiqueta(carta: Carta) -> str:
+    """Cómo se le nombra la carta al jugador en un mensaje: '5♥', 'Q♣', 'Comodín'."""
+    if carta.es_comodin:
+        return "Comodín"
+    return f"{RANGOS.get(carta.rango, carta.rango)}{SIMBOLOS[carta.pinta]}"

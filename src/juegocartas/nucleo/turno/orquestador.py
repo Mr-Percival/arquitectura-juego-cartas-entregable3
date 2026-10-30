@@ -114,7 +114,8 @@ class TurnOrchestrator:
             cierre = self._liquidador.liquidar(partida_id, jugador, evaluacion)
             self._registro.registrar_ronda(cierre)  # si falla, la excepción sale y no se publica nada
             estado.fase = FaseTurno.FINALIZADO
-            self._eventos.publicar(EventoPartida("RondaLiquidada", partida_id, {"cerrada_por": jugador}))
+            self._eventos.publicar(EventoPartida("RondaLiquidada", partida_id, {"cerrada_por": jugador, "cierre": cierre,
+                                                                                "evaluacion": evaluacion}))
             return evaluacion
 
     @staticmethod

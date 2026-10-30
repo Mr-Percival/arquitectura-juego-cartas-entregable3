@@ -99,3 +99,9 @@ class SalaService:
                 raise ErrorSala("Hace falta al menos otra persona. Compártele el código.")
             sala.estado = "EN_PARTIDA"
         return sala
+
+    def reabrir(self, codigo: str) -> None:
+        """La partida terminó: la sala vuelve a recibir jugadores y el anfitrión puede empezar otra."""
+        sala = self.obtener(codigo)
+        with sala.candado:
+            sala.estado = "ABIERTA"

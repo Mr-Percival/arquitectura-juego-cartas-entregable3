@@ -8,7 +8,8 @@ from typing import Any, Mapping, Sequence
 
 from juegocartas.nucleo.contrato import (VERSION_CONTRATO, Carta, DecisionFin, EvaluacionCierre,
                                          Marcador)
-from juegocartas.nucleo.contrato.combinaciones import particiones
+from juegocartas.nucleo.contrato.codigos import etiqueta
+from juegocartas.nucleo.contrato.combinaciones import mejor_cobertura, particiones
 
 # Tipos de cierre propios de la variante: los define el plug-in, no el núcleo ni el esquema SQL.
 TOCAR, COMPLETO, PINTAS = "TOCAR", "COMPLETO", "PINTAS"
@@ -39,14 +40,28 @@ class CierreApuntado:
         return None
 
     def _tocar(self, mano: Sequence[Carta]) -> EvaluacionCierre:
-        mejor: EvaluacionCierre | None = None
+        menor: tuple[int, list[Carta]] | None = None  # el sobrante más bajo, para explicar el rechazo
         for combinaciones, sobrantes in particiones(mano, (3, 3, 3)):
             restantes = sorted(sobrantes, key=self._tabla.puntos)[:-1]  # la más alta se descarta
             puntos = sum(self._tabla.puntos(c) for c in restantes)
             if puntos < self._umbral:
-                mejor = EvaluacionCierre(True, TOCAR, tuple(combinaciones), tuple(restantes))
-                break
-        return mejor or EvaluacionCierre(False, motivo_rechazo=f"Sobrantes >= {self._umbral} puntos o faltan ternas")
+                return EvaluacionCierre(True, TOCAR, tuple(combinaciones), tuple(restantes))
+            if menor is None or puntos < menor[0]:
+                menor = (puntos, restantes)
+        return EvaluacionCierre(False, motivo_rechazo=self._por_que_no(mano, menor))
+
+    def _por_que_no(self, mano: Sequence[Carta], menor: tuple[int, list[Carta]] | None) -> str:
+        """Mensaje de la historia H4: cuánto suma el sobrante o cuántas ternas faltan."""
+        if menor is None:
+            formadas = len(mejor_cobertura(mano, lambda c: 1)[0])
+            return f"Tienes {formadas} de las 3 ternas o escaleras que se necesitan para cerrar."
+        puntos, restantes = menor
+        cartas = " y ".join(etiqueta(c) for c in restantes)
+        if puntos == self._umbral:
+            detalle = f"Con exactamente {self._umbral} no se puede: tienen que ser menos de {self._umbral}."
+        else:
+            detalle = f"Para cerrar tienen que ser menos de {self._umbral}, después de descartar tu carta más alta."
+        return f"Te quedan {puntos} puntos sueltos ({cartas}). {detalle}"
 
     @staticmethod
     def _misma_pinta(combinaciones) -> bool:

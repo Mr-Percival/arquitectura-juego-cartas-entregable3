@@ -104,6 +104,6 @@ def test_mazo_agotado_se_rebaraja_el_pozo(juego, sala):
         jugador = partida(juego, sala, "Nico")["en_turno"]
         juego.robar(sala, jugador, "MAZO")
         juego.descartar(sala, jugador, partida(juego, sala, jugador)["mano"][0])
-    mesa = juego._partidas[sala].mesa
+    mesa = juego._partidas.obtener(sala).mesa
     assert mesa.rebarajadas >= 1
     assert len(mesa.mazo) + len(mesa.pozo) + sum(map(len, mesa.manos.values())) == 54  # ni se pierden ni se duplican

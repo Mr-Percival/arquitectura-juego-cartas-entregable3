@@ -89,6 +89,8 @@ class GameGateway:
             self._juego.robar(sesion.sala, sesion.jugador, str(mensaje.get("origen", "")))
         elif accion == "descartar":
             self._juego.descartar(sesion.sala, sesion.jugador, str(mensaje.get("carta", "")))
+        elif accion == "cerrar":
+            self._juego.cerrar(sesion.sala, sesion.jugador)
         else:
             raise ErrorSala("Acción desconocida.")
 

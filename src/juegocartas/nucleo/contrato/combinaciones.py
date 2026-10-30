@@ -86,3 +86,8 @@ def mejor_cobertura(mano: Sequence[Carta], costo: Callable[[Carta], int]) -> tup
     usados = {i for grupo in grupos for i in grupo}
     return ([clasificar([mano[i] for i in grupo]) for grupo in grupos],
             [c for i, c in enumerate(mano) if i not in usados])
+
+
+def cartas_sueltas(mano: Sequence[Carta], puntos: Callable[[Carta], int]) -> tuple[list[Combinacion], list[Carta]]:
+    """La mejor cobertura con una tabla de puntos: deja sueltos los menos puntos y, a igual puntaje, las menos cartas."""
+    return mejor_cobertura(mano, lambda c: puntos(c) * 100 + 1)

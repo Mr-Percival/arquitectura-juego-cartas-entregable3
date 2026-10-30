@@ -187,6 +187,7 @@ dialog .barra { background: #e2e6e1; }
 dialog .barra i { background: #6b7a70; }
 dialog .barra i.cerca { background: var(--pinta-roja); }
 dialog .btn-principal { width: 100%; }
+dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
 
 .hueco { display: block; width: var(--carta-an); height: var(--carta-al); border-radius: var(--r-carta); border: 2px dashed var(--pano-borde); }
 .sala .espera { color: var(--texto-tenue); }
@@ -259,6 +260,7 @@ dialog .btn-principal { width: 100%; }
 
     <div class="resumen-mano">
       <span class="dato" id="dato-mano"></span>
+      <span class="mio" id="mio"></span>
       <span class="regla" id="regla-mano"></span>
     </div>
     <div class="mano" id="mano" aria-label="Tu mano"></div>
@@ -273,9 +275,18 @@ dialog .btn-principal { width: 100%; }
     <div class="acciones">
       <button class="btn" id="ordenar">Ordenar</button>
       <button class="btn btn-principal" id="descartar" disabled>Descartar</button>
-      <button class="btn" id="cerrar" disabled title="Llega con las historias H3 y H4">Cerrar ronda</button>
+      <button class="btn" id="cerrar" disabled>Cerrar ronda</button>
     </div>
   </section>
+
+  <!-- ============ RESUMEN DE RONDA (H3 y H4) ============ -->
+  <dialog id="resumen">
+    <h2 id="res-titulo"></h2>
+    <p id="res-texto"></p>
+    <div id="res-tabla"></div>
+    <button class="btn btn-principal" id="res-boton"></button>
+    <button class="salir" id="res-salir" hidden>Salir de esta sala</button>
+  </dialog>
 </main>
 <div class="conexion" id="conexion" role="status" hidden>Sin conexión con el servidor. Reintentando…</div>
 
@@ -330,7 +341,8 @@ function recibir(m) {
   if (m.tipo === "sesion") { guardar("token", m.token); return; }
   if (m.tipo === "error") {
     if (m.accion === "reconectar") { guardar("token", null); return pintar(); }
-    return mostrarError(m.mensaje);
+    const [titulo, ...detalle] = m.mensaje.split(/(?<=\.) /);
+    return mostrarError(titulo, detalle.join(" "));
   }
   if (m.tipo === "estado") {
     const turnoAntes = V && V.partida && V.partida.en_turno;
@@ -378,6 +390,7 @@ function textoJugada(j, yo) {
   if (j.accion === "ROBAR_MAZO") return `${quien} ${tu ? "robaste" : "robó"} del mazo`;
   if (j.accion === "ROBAR_POZO") return `${quien} ${tu ? "tomaste" : "tomó"} ${etiqueta(j.carta)} del pozo`;
   if (j.accion === "DESCARTAR") return `${quien} ${tu ? "descartaste" : "descartó"} ${etiqueta(j.carta)}`;
+  if (j.accion === "CERRAR") return `${quien} ${tu ? "cerraste" : "cerró"} la ronda`;
   return "";
 }
 
@@ -406,12 +419,14 @@ function pintarJuego() {
   $("ronda").textContent = "ronda " + P.ronda;
 
   const rivales = V.jugadores.filter(j => j.nombre !== V.yo);
+  const yo = V.jugadores.find(j => j.nombre === V.yo), fin = !!P.ganador;
   $("rivales").style.gridTemplateColumns = `repeat(${Math.max(rivales.length, 1)}, 1fr)`;
   $("rivales").innerHTML = rivales.map(j => {
-    const turno = P.en_turno === j.nombre;
-    return `<div class="rival ${turno ? "en-turno" : ""}">
+    const turno = !fin && P.en_turno === j.nombre;
+    return `<div class="rival ${turno ? "en-turno" : ""} ${j.fuera ? "eliminado" : ""}">
       <div class="nombre">${esc(j.nombre)}</div>
-      <div class="estado">${turno ? "Jugando, " : ""}${j.cartas} cartas</div>
+      <div class="estado">${j.fuera ? `Llegó a ${meta()}, fuera` : (turno ? "Jugando, " : "") + j.cartas + " cartas"}</div>
+      ${ap ? marcador(j.puntos) : ""}
     </div>`;
   }).join("");
 
@@ -429,13 +444,16 @@ function pintarJuego() {
   const aviso = $("aviso");
   aviso.classList.toggle("tu-turno", miTurno);
   aviso.textContent =
+    fin ? (P.ganador === V.yo ? "Ganaste la partida." : `Partida terminada: ganó ${P.ganador}.`) :
+    yo.fuera ? `Llegaste a ${meta()} y quedaste fuera. Puedes seguir mirando la partida.` :
     !miTurno ? `Turno de ${P.en_turno}. Espera tu turno.` :
     robo ? "Tu turno: toma una carta del mazo o del pozo." :
-    sel === null ? "Toca la carta que quieres descartar." :
+    sel === null ? "Toca la carta que quieres descartar, o cierra la ronda si ya puedes." :
     `Descarta ${etiqueta(mano[sel])} con el botón.`;
 
   // Contador junto a la mano (lo calcula el servidor con la tabla de la variante)
   const A = P.analisis;
+  $("mio").innerHTML = ap ? `Tú: ${yo.puntos} de ${meta()}${barra(yo.puntos)}` : "";
   if (ap) {
     $("dato-mano").textContent = `Puntos sueltos: ${A.puntos_sueltos}`;
     $("regla-mano").textContent = A.sin_contar
@@ -463,6 +481,55 @@ function pintarJuego() {
   const d = $("descartar");
   d.disabled = !(descarte && sel !== null);
   d.textContent = descarte && sel !== null ? "Descartar " + etiqueta(mano[sel]) : "Descartar";
+  $("cerrar").disabled = !descarte;
+  mostrarResumen();
+}
+
+const meta = () => V.config.umbral_eliminacion || 101;
+function barra(puntos) {
+  const cerca = puntos >= meta() * 0.85 ? "cerca" : "";
+  return `<div class="barra"><i class="${cerca}" style="width:${Math.max(0, Math.min(100, puntos / meta() * 100))}%"></i></div>`;
+}
+const marcador = puntos => `<div class="puntos">${puntos} de ${meta()}</div>${barra(puntos)}`;
+
+/* Al terminar una ronda, cada jugador ve una vez el resumen; el de fin de partida se queda hasta empezar otra. */
+function mostrarResumen() {
+  const R = V.partida.resumen, dlg = $("resumen");
+  if (!R) { if (dlg.open) dlg.close(); return; }
+  const clave = `${V.sala}-${V.partida.ganador ? "fin" : R.numero}-${R.cerro}`;
+  if (dlg.open || (!R.terminada && leer("resumen") === clave)) return;
+  const yoCerre = R.cerro === V.yo, quien = yoCerre ? "Cerraste" : `${R.cerro} cerró`;
+  const combos = enumerar(R.combos.map(describirCombo));
+  const anfitrion = V.yo === V.anfitrion;
+  if (V.variante === "CLASICA_433") {
+    $("res-titulo").textContent = yoCerre ? "Ganaste la ronda" : `${R.cerro} ganó la ronda`;
+    $("res-texto").textContent = `${quien} con ${combos}` + (R.descarte ? ` y ${yoCerre ? "descartaste" : "descartó"} ${etiqueta(R.descarte)}.` : ".");
+    $("res-tabla").innerHTML = "";
+  } else {
+    const ganoYo = R.ganador === V.yo;
+    $("res-titulo").textContent = R.terminada ? (ganoYo ? "Ganaste la partida" : `${R.ganador} ganó la partida`) : `${quien} la ronda ${R.numero}`;
+    const fuera = R.filas.filter(f => f.fuera).map(f => f.jugador === V.yo ? "tú" : f.jugador);
+    $("res-texto").textContent = `${quien} con ${combos}.` +
+      (R.bono ? ` ${yoCerre ? "Ganas" : "Gana"} un bono de ${R.bono} puntos.` :
+        R.quedan.length ? ` ${yoCerre ? "Te quedaron" : "Le quedaron"} ${R.puntos_quedan} puntos sueltos, que no se ${yoCerre ? "te" : "le"} suman.` : "") +
+      (fuera.length ? ` ${mayus(enumerar(fuera))} ${fuera.length > 1 ? "llegaron" : (fuera[0] === "tú" ? "llegaste" : "llegó")} a ${meta()} y ${fuera.length > 1 ? "salen" : (fuera[0] === "tú" ? "sales" : "sale")} de la partida.` : "");
+    $("res-tabla").innerHTML = `<table><thead><tr><th>Jugador</th><th class="num">Esta ronda</th><th class="num">Total</th><th style="width:35%">Hacia ${meta()}</th></tr></thead><tbody>` +
+      R.filas.map(f => `<tr><td>${esc(f.jugador === V.yo ? "Tú" : f.jugador)}${f.fuera ? ' <span class="eliminado-tag">fuera</span>' : ""}</td>
+        <td class="num">${f.ronda > 0 ? "+" : ""}${f.ronda}</td><td class="num">${f.total}</td><td>${barra(f.total)}</td></tr>`).join("") +
+      "</tbody></table>";
+  }
+  const terminada = !!V.partida.ganador;
+  const boton = $("res-boton");
+  boton.hidden = terminada && !anfitrion;
+  boton.textContent = terminada ? "Jugar otra partida" : "Siguiente ronda";
+  boton.onclick = () => {
+    if (terminada) return enviar({ accion: "empezar" });
+    guardar("resumen", clave); dlg.close();
+  };
+  $("res-salir").hidden = !terminada;
+  if (terminada && !anfitrion) $("res-texto").textContent += ` Si ${V.anfitrion} empieza otra partida, entras de una.`;
+  dlg.oncancel = e => { if (terminada) e.preventDefault(); else guardar("resumen", clave); };
+  dlg.showModal();
 }
 
 /* A cada posición de la mano le toca el color de la combinación en que está (las cartas repetidas se reparten). */
@@ -509,6 +576,8 @@ $("descartar").onclick = () => {
   sel = null; ocultarError();
   enviar({ accion: "descartar", carta });
 };
+$("cerrar").onclick = () => { sel = null; ocultarError(); enviar({ accion: "cerrar" }); };
+$("res-salir").onclick = () => { $("resumen").close(); $("salir-sala").click(); };
 $("mover-izq").onclick = () => mover(-1);
 $("mover-der").onclick = () => mover(1);
 $("ordenar").onclick = () => {
