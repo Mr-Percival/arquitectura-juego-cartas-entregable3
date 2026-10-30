@@ -2,6 +2,8 @@
 
 Traduce los mensajes del navegador a comandos de GameService y, cuando el bus avisa que algo
 cambió en una sala, le manda a cada jugador conectado su propia vista (cada uno ve solo su mano).
+Reconexión (H5): el token de la sesión vive en el navegador; al refrescar o al volver la red, la
+pantalla lo manda y recupera su mano y su turno. Los demás ven quién está sin conexión.
 Solo habla con el núcleo a través de sus interfaces de servicio; no importa persistencia (regla R1).
 No depende del framework web: sirve cualquier conexión con `send_json` (FastAPI o un doble de prueba).
 """
@@ -48,7 +50,10 @@ class GameGateway:
         try:
             if accion in ("crear", "unirse", "reconectar"):
                 sesion = self._entrar(accion, mensaje)
-                self._conexiones.setdefault(sesion.sala, {})[sesion.jugador] = conexion
+                anterior = self._conexiones.setdefault(sesion.sala, {}).get(sesion.jugador)
+                if anterior is not None and anterior is not conexion:  # abrió el juego en otra pestaña
+                    await self._enviar(anterior, {"tipo": "reemplazada"})
+                self._conexiones[sesion.sala][sesion.jugador] = conexion
                 await conexion.send_json({"tipo": "sesion", "token": sesion.token,
                                           "sala": sesion.sala, "jugador": sesion.jugador})
                 self._pendientes.add(sesion.sala)
@@ -61,10 +66,15 @@ class GameGateway:
         await self._difundir()
         return sesion
 
-    def desconectar(self, sesion: Sesion | None, conexion: Conexion) -> None:
-        """El jugador sigue en la sala: puede volver con su token (H5)."""
+    async def desconectar(self, sesion: Sesion | None, conexion: Conexion) -> None:
+        """El jugador sigue en la sala y puede volver con su token; a los demás se les avisa (H5)."""
         if sesion and self._conexiones.get(sesion.sala, {}).get(sesion.jugador) is conexion:
             del self._conexiones[sesion.sala][sesion.jugador]
+            self._pendientes.add(sesion.sala)
+            await self._difundir()
+
+    def bitacora(self, codigo_sala: str) -> list[dict]:
+        return self._juego.bitacora(codigo_sala)
 
     def _entrar(self, accion: str, mensaje: Mapping[str, Any]) -> Sesion:
         if accion == "reconectar":
@@ -100,8 +110,10 @@ class GameGateway:
     async def _difundir(self) -> None:
         pendientes, self._pendientes = self._pendientes, set()
         for sala in pendientes:
+            conectados = list(self._conexiones.get(sala, {}))
             for jugador, conexion in list(self._conexiones.get(sala, {}).items()):
-                await self._enviar(conexion, {"tipo": "estado", **self._juego.vista(sala, jugador)})
+                await self._enviar(conexion, {"tipo": "estado", **self._juego.vista(sala, jugador),
+                                              "conectados": conectados})
 
     @staticmethod
     async def _enviar(conexion: Conexion, datos: dict) -> None:

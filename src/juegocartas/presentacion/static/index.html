@@ -192,6 +192,8 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
 .hueco { display: block; width: var(--carta-an); height: var(--carta-al); border-radius: var(--r-carta); border: 2px dashed var(--pano-borde); }
 .sala .espera { color: var(--texto-tenue); }
 .salir { margin-top: var(--e-6); background: none; border: 0; color: var(--texto-tenue); text-decoration: underline; min-height: 44px; padding: 0; }
+.sin-red { color: var(--combo-c); font-weight: 700; }
+.conexion .btn { margin-left: var(--e-2); }
 .conexion { position: fixed; left: 0; right: 0; bottom: 0; padding: var(--e-2) max(16px, env(safe-area-inset-left, 0px)) calc(var(--e-2) + env(safe-area-inset-bottom, 0px)); background: var(--error-fondo); color: var(--error-texto); font-weight: 700; text-align: center; }
 
 @media (prefers-reduced-motion: reduce) { .carta { transition: none; } }
@@ -289,6 +291,8 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
   </dialog>
 </main>
 <div class="conexion" id="conexion" role="status" hidden>Sin conexión con el servidor. Reintentando…</div>
+<div class="conexion" id="otra-pestana" role="status" hidden>Abriste el juego en otra pestaña.
+  <button class="btn btn-principal" id="seguir-aqui">Jugar en esta</button></div>
 
 <script>
 /* La pantalla no aplica reglas: el servidor (núcleo y plug-ins) decide y le manda a cada jugador su vista. */
@@ -310,7 +314,7 @@ const guardar = (k, v) => { try { v === null ? localStorage.removeItem(k) : loca
 const leer = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 
 /* ---------- Estado local ---------- */
-let ws = null, V = null, variante = "APUNTADO_101";
+let ws = null, V = null, variante = "APUNTADO_101", reemplazada = false;
 let mano = [];      // orden en que el jugador acomodó su mano (solo vive en su pantalla)
 let sel = null;     // índice de la carta elegida
 
@@ -331,7 +335,7 @@ function conectar() {
     if (token) enviar({ accion: "reconectar", token });
   };
   ws.onmessage = e => recibir(JSON.parse(e.data));
-  ws.onclose = () => { $("conexion").hidden = false; setTimeout(conectar, 1500); };
+  ws.onclose = () => { if (!reemplazada) { $("conexion").hidden = false; setTimeout(conectar, 1500); } };
 }
 function enviar(datos) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(datos));
@@ -339,6 +343,7 @@ function enviar(datos) {
 }
 function recibir(m) {
   if (m.tipo === "sesion") { guardar("token", m.token); return; }
+  if (m.tipo === "reemplazada") { reemplazada = true; $("otra-pestana").hidden = false; ws.close(); return; }
   if (m.tipo === "error") {
     if (m.accion === "reconectar") { guardar("token", null); return pintar(); }
     const [titulo, ...detalle] = m.mensaje.split(/(?<=\.) /);
@@ -371,7 +376,7 @@ function pintarSala() {
   $("codigo-sala").textContent = V.sala;
   $("guia-sala").textContent = `${TITULO[V.variante]}. Quienes entren con este código aparecen aquí (máximo ${V.capacidad} jugadores).`;
   $("lista-sala").innerHTML = V.jugadores.map(j =>
-    `<li>${esc(j.nombre)}${j.nombre === V.yo ? " (tú)" : ""}${j.nombre === V.anfitrion ? ", creó la sala" : ""}</li>`).join("");
+    `<li>${esc(j.nombre)}${j.nombre === V.yo ? " (tú)" : ""}${j.nombre === V.anfitrion ? ", creó la sala" : ""}${conectado(j) ? "" : ' <span class="sin-red">sin conexión</span>'}</li>`).join("");
   $("empezar").hidden = !anfitrion;
   $("empezar").disabled = n < 2;
   $("espera-sala").textContent = anfitrion
@@ -425,7 +430,7 @@ function pintarJuego() {
     const turno = !fin && P.en_turno === j.nombre;
     return `<div class="rival ${turno ? "en-turno" : ""} ${j.fuera ? "eliminado" : ""}">
       <div class="nombre">${esc(j.nombre)}</div>
-      <div class="estado">${j.fuera ? `Llegó a ${meta()}, fuera` : (turno ? "Jugando, " : "") + j.cartas + " cartas"}</div>
+      <div class="estado">${j.fuera ? `Llegó a ${meta()}, fuera` : !conectado(j) ? '<span class="sin-red">Sin conexión</span>' : (turno ? "Jugando, " : "") + j.cartas + " cartas"}</div>
       ${ap ? marcador(j.puntos) : ""}
     </div>`;
   }).join("");
@@ -446,6 +451,7 @@ function pintarJuego() {
   aviso.textContent =
     fin ? (P.ganador === V.yo ? "Ganaste la partida." : `Partida terminada: ganó ${P.ganador}.`) :
     yo.fuera ? `Llegaste a ${meta()} y quedaste fuera. Puedes seguir mirando la partida.` :
+    !miTurno && !conectado({ nombre: P.en_turno }) ? `${P.en_turno} perdió la conexión. Cuando vuelva, sigue su turno.` :
     !miTurno ? `Turno de ${P.en_turno}. Espera tu turno.` :
     robo ? "Tu turno: toma una carta del mazo o del pozo." :
     sel === null ? "Toca la carta que quieres descartar, o cierra la ronda si ya puedes." :
@@ -486,6 +492,7 @@ function pintarJuego() {
 }
 
 const meta = () => V.config.umbral_eliminacion || 101;
+const conectado = j => !V.conectados || V.conectados.includes(j.nombre);
 function barra(puntos) {
   const cerca = puntos >= meta() * 0.85 ? "cerca" : "";
   return `<div class="barra"><i class="${cerca}" style="width:${Math.max(0, Math.min(100, puntos / meta() * 100))}%"></i></div>`;
@@ -576,6 +583,7 @@ $("descartar").onclick = () => {
   sel = null; ocultarError();
   enviar({ accion: "descartar", carta });
 };
+$("seguir-aqui").onclick = () => { reemplazada = false; $("otra-pestana").hidden = true; conectar(); };
 $("cerrar").onclick = () => { sel = null; ocultarError(); enviar({ accion: "cerrar" }); };
 $("res-salir").onclick = () => { $("resumen").close(); $("salir-sala").click(); };
 $("mover-izq").onclick = () => mover(-1);

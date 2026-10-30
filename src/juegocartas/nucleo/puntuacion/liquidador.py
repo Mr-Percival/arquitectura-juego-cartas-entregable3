@@ -1,7 +1,7 @@
 """RoundScoringComponent y MatchStandingsComponent, y el liquidador que el orquestador usa al cerrar."""
 from __future__ import annotations
 
-import secrets
+import uuid
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
@@ -66,7 +66,7 @@ class LiquidadorRonda:
     """
 
     def __init__(self, registro: IResolverVariante, rondas: IConsultarRonda,
-                 nuevo_id: Callable[[], str] = lambda: secrets.token_hex(8)) -> None:
+                 nuevo_id: Callable[[], str] = lambda: str(uuid.uuid4())) -> None:
         self._registro = registro
         self._rondas = rondas
         self._nuevo_id = nuevo_id

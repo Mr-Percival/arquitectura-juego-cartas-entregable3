@@ -1,4 +1,4 @@
-# Gobernanza automatizada (sección 5): el build falla si se viola una regla de arquitectura.
+# Gobernanza automatizada (sección 4): el build falla si se viola una regla de arquitectura.
 name: fitness-functions
 on: [push, pull_request]
 jobs:
@@ -10,7 +10,27 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - name: Fitness functions (PyTestArch, ciclos, contrato, CC con radon) + integración PostgreSQL
+      - name: Fitness functions (PyTestArch, ciclos, contrato, CC con radon) + pruebas del MVP + PostgreSQL
         run: pytest tests -v
-      - name: Reporte de complejidad ciclomática (informativo)
-        run: radon cc src -s -a
+      - name: Métricas Ca, Ce, I, A, D, CC y Deméter (falla si un plug-in se aleja de la secuencia principal)
+        run: |
+          python herramientas/metricas.py --exigir --salida metricas.md
+          cat metricas.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reporte-metricas
+          path: metricas.md
+
+  despliegue:
+    # H7: `docker compose up` levanta la base y el juego, y el servidor crea el esquema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: El juego responde y quedó conectado a PostgreSQL
+        run: |
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/salud && break; sleep 2; done
+          curl -sf http://localhost:8000/ | grep -q "<title>"
+          docker compose logs web | grep -q "Esquema creado"
+      - if: always()
+        run: docker compose logs

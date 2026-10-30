@@ -36,6 +36,9 @@ class Partida:
     def vivos(self) -> list[str]:
         return [j for j in self.marcador.saldos if j not in self.marcador.eliminados]
 
+    def ronda_id(self, codigo_sala: str) -> str:
+        return f"{codigo_sala}-{self.serie}-R{self.ronda}"
+
 
 class PartidasEnCurso:
     """Provee IConsultarRonda."""
@@ -51,5 +54,5 @@ class PartidasEnCurso:
 
     def ronda_en_curso(self, partida_id: str) -> RondaEnCurso:
         p = self._partidas[partida_id]
-        return RondaEnCurso(f"{partida_id}-{p.serie}-R{p.ronda}", p.variante, p.config, p.turno,
+        return RondaEnCurso(p.ronda_id(partida_id), p.variante, p.config, p.turno,
                             {j: list(m) for j, m in p.mesa.manos.items()}, p.marcador)

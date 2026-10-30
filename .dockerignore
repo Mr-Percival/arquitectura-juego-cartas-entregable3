@@ -1,0 +1,8 @@
+.venv
+.git
+**/__pycache__
+.pytest_cache
+*.egg-info
+docs/informe
+docs/risk_storming
+tests

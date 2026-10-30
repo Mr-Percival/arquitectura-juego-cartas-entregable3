@@ -1,0 +1,27 @@
+# `docker compose up` levanta la base y el juego en http://localhost:8000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: juego
+      POSTGRES_PASSWORD: juego
+      POSTGRES_DB: juego
+    volumes:
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U juego"]
+      interval: 2s
+      retries: 30
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://juego:juego@db:5432/juego
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos:

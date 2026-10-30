@@ -4,19 +4,20 @@ Coordina sala (H1), mesa y orquestador (H2) y el cierre de ronda (H3 y H4). No c
 variante concreta: las reglas y la tabla de puntos se piden al registro por código (ADR-03). Cada
 comando que cambia el estado termina en un evento del bus; la presentación lo usa para avisarles a
 los demás jugadores. El marcador y la ronda siguiente cambian al oír RondaLiquidada, que solo se
-publica si la ronda quedó guardada (ADR-05).
+publica si la ronda quedó guardada (ADR-05). Cada jugada queda además en la bitácora de auditoría (H6).
 """
 from __future__ import annotations
 
+import logging
 import secrets
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from juegocartas.nucleo.contrato import Carta, EvaluacionCierre, Marcador, VariantePlugin
 from juegocartas.nucleo.contrato.codigos import codigo, desde_codigo
 from juegocartas.nucleo.contrato.combinaciones import cartas_sueltas
 from juegocartas.nucleo.sala.salas import ErrorSala, Sala, SalaService
 from juegocartas.nucleo.soporte.eventos import EventoPartida
-from juegocartas.nucleo.soporte.historial import CierreRonda, RondaYaLiquidada
+from juegocartas.nucleo.soporte.historial import CierreRonda, Jugada, RondaYaLiquidada
 from juegocartas.nucleo.turno.mesa import CARTAS_POR_MANO, Mesa
 from juegocartas.nucleo.turno.orquestador import ComandoFueraDeTurno, TurnOrchestrator
 
@@ -24,6 +25,8 @@ from .partidas import Partida, PartidasEnCurso
 
 ORIGENES = ("MAZO", "POZO")
 JUGADAS_VISIBLES = 8
+EN_BITACORA = {"ROBAR_MAZO": "ROBAR_MAZO", "ROBAR_POZO": "ROBAR_DESCARTE", "DESCARTAR": "DESCARTAR"}
+registro = logging.getLogger(__name__)
 
 
 class IResolverVariante(Protocol):
@@ -36,13 +39,26 @@ class IEventos(Protocol):
     def suscribir(self, tipo: str, suscriptor: Callable[[EventoPartida], None]) -> None: ...
 
 
+class IBitacora(Protocol):
+    def abrir_partida(self, sala: str, serie: str, variante: str, config: Mapping[str, Any],
+                      jugadores: Sequence[str], capacidad: int) -> None: ...
+
+    def abrir_ronda(self, sala: str, serie: str, ronda_id: str, numero: int, semilla: int,
+                    jugadores: Sequence[str]) -> None: ...
+
+    def anotar_jugada(self, jugada: Jugada) -> None: ...
+
+    def consultar_bitacora(self, sala: str) -> list[dict]: ...
+
+
 class GameService:
     def __init__(self, salas: SalaService, orquestador: TurnOrchestrator, variantes: IResolverVariante,
-                 eventos: IEventos, partidas: PartidasEnCurso | None = None) -> None:
+                 eventos: IEventos, bitacora: IBitacora, partidas: PartidasEnCurso | None = None) -> None:
         self._salas = salas
         self._orquestador = orquestador
         self._variantes = variantes
         self._eventos = eventos
+        self._bitacora = bitacora
         self._partidas = partidas or PartidasEnCurso()
         eventos.suscribir("RondaLiquidada", self._al_liquidar)
 
@@ -62,6 +78,14 @@ class GameService:
         sala = self._salas.empezar(codigo_sala, quien)
         partida = Partida(self._repartir(sala, sala.jugadores), sala.variante, sala.config,
                           Marcador({j: 0 for j in sala.jugadores}), abre=sala.jugadores[0])
+        try:  # sin la partida en la base, su cierre no se podría guardar: mejor no empezarla
+            self._bitacora.abrir_partida(sala.codigo, partida.serie, sala.variante, sala.config,
+                                         sala.jugadores, sala.capacidad)
+            self._abrir_ronda(sala.codigo, partida)
+        except Exception as exc:
+            registro.exception("No se pudo registrar la partida de la sala %s", sala.codigo)
+            self._salas.reabrir(sala.codigo)
+            raise ErrorSala("No se pudo empezar la partida. Intenta otra vez.") from exc
         self._partidas.guardar(sala.codigo, partida)
         self._orquestador.iniciar(sala.codigo, sala.variante, sala.config, partida.abre, sala.jugadores)
         self._eventos.publicar(EventoPartida("PartidaIniciada", sala.codigo, {}))
@@ -77,6 +101,7 @@ class GameService:
         partida.nueva = {jugador: carta}
         visible = codigo(carta) if origen == "POZO" else None  # lo robado del mazo no lo ven los demás
         self._anotar(partida, jugador, "ROBAR_" + origen, visible)
+        self._registrar(codigo_sala, partida, jugador, "ROBAR_" + origen, codigo(carta))
 
     def descartar(self, codigo_sala: str, jugador: str, carta_codigo: str) -> None:
         partida = self._partida(codigo_sala)
@@ -86,6 +111,7 @@ class GameService:
             raise ErrorSala("Esa carta no existe.") from exc
         self._orquestador.descartar(codigo_sala, jugador, lambda: partida.mesa.descartar(jugador, carta))
         partida.nueva = {}
+        self._registrar(codigo_sala, partida, jugador, "DESCARTAR", carta_codigo)
         partida.turno += 1
         self._anotar(partida, jugador, "DESCARTAR", carta_codigo)
 
@@ -103,8 +129,9 @@ class GameService:
         except Exception as exc:  # no se pudo guardar: nada cambió (ADR-05) y el jugador sigue en su turno
             raise ErrorSala("No se pudo guardar el cierre. Intenta otra vez.") from exc
         if not evaluacion.valida:
+            self._registrar(codigo_sala, partida, jugador, "SOLICITAR_CIERRE", None, evaluacion.motivo_rechazo)
             raise ErrorSala("No puedes cerrar todavía. " + evaluacion.motivo_rechazo)
-        self._anotar(partida, jugador, "CERRAR", None)
+        self._anotar(partida, jugador, "CERRAR", None)  # el cierre aceptado lo guarda la transacción de cierre
 
     def _al_liquidar(self, evento: EventoPartida) -> None:
         """La ronda ya quedó guardada: se actualiza el marcador y se reparte otra o se declara el ganador."""
@@ -126,6 +153,7 @@ class GameService:
         partida.abre = next(j for j in orden[orden.index(partida.abre) + 1:] + orden if j in vivos)
         partida.mesa = self._repartir(sala, vivos)
         partida.ronda, partida.turno, partida.nueva = partida.ronda + 1, 1, {}
+        self._abrir_ronda(sala.codigo, partida)  # si falla, sale al log del bus y el cierre avisará
         self._orquestador.iniciar(sala.codigo, sala.variante, sala.config, partida.abre, vivos)
 
     def _resumir(self, partida: Partida, cierre: CierreRonda, evaluacion: EvaluacionCierre,
@@ -145,6 +173,10 @@ class GameService:
         }
 
     # ---------- Consulta ----------
+    def bitacora(self, codigo_sala: str) -> list[dict]:
+        """La bitácora de auditoría de la sala (H6): solo rondas ya cerradas, para no revelar manos."""
+        return self._bitacora.consultar_bitacora(self._salas.obtener(codigo_sala).codigo)
+
     def vista(self, codigo_sala: str, jugador: str) -> dict[str, Any]:
         """Lo que ve un jugador: la sala, y si hay partida, su mano y lo público de la mesa."""
         sala = self._salas.obtener(codigo_sala)
@@ -215,4 +247,18 @@ class GameService:
 
     def _anotar(self, partida: Partida, jugador: str, accion: str, carta: str | None) -> None:
         partida.bitacora.append({"jugador": jugador, "accion": accion, "carta": carta})
+
+    def _abrir_ronda(self, codigo_sala: str, partida: Partida) -> None:
+        self._bitacora.abrir_ronda(codigo_sala, partida.serie, partida.ronda_id(codigo_sala), partida.ronda,
+                                   partida.mesa.semilla, partida.vivos())
+
+    def _registrar(self, codigo_sala: str, partida: Partida, jugador: str, accion: str, carta: str | None,
+                   motivo: str | None = None) -> None:
+        """La jugada ya ocurrió: si la bitácora falla, queda en el log y la partida sigue."""
+        jugada = Jugada(codigo_sala, partida.ronda_id(codigo_sala), jugador, partida.turno,
+                        EN_BITACORA.get(accion, accion), carta, motivo)
+        try:
+            self._bitacora.anotar_jugada(jugada)
+        except Exception:
+            registro.exception("No se pudo anotar en la bitácora: %s", jugada)
 

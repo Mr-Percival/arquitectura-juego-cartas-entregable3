@@ -145,3 +145,57 @@ def test_no_puede_haber_dos_rondas_abiertas(uri):
         nueva_ronda(cx, partida, jugadores, 1)
         with pytest.raises(psycopg.errors.UniqueViolation):
             nueva_ronda(cx, partida, jugadores, 2)
+
+
+
+# ---------- H6: el MVP completo contra PostgreSQL ----------
+
+def test_partida_del_mvp_queda_en_la_base_con_su_bitacora(uri):
+    """GameService con el adaptador real: dos rondas de Apuntado y luego otra partida en la misma sala."""
+    from juegocartas.arranque import armar_gateway
+    from juegocartas.nucleo.contrato.codigos import desde_codigo
+
+    juego = armar_gateway(PostgresRepositoryAdapter.desde_url(uri))._juego
+    sala = juego.crear_sala("Nico", "APUNTADO_101").codigo
+    juego.unirse(sala, "Caro")
+
+    def cerrar(quien, mano):
+        """Fija las dos manos: al otro le quedan 4 puntos, así nadie llega a 101 por azar."""
+        juego.robar(sala, quien, "MAZO")
+        manos = juego._partidas.obtener(sala).mesa.manos
+        otro = next(j for j in manos if j != quien)
+        manos[otro] = [desde_codigo(c) for c in "2H 2S 2D 3H 3S 3D 5H 5S 5D 4C".split()]
+        manos[quien] = [desde_codigo(c) for c in mano.split()]
+        juego.cerrar(sala, quien)
+
+    juego.empezar(sala, "Nico")
+    juego.robar(sala, "Nico", "MAZO")
+    juego.descartar(sala, "Nico", juego.vista(sala, "Nico")["partida"]["mano"][0])
+    cerrar("Caro", "7H 7S 7D 3C 4C 5C KS KH KD 2D QC")                    # ronda 1
+    cerrar(juego.vista(sala, "Nico")["partida"]["en_turno"], "AH AS AD JH JS JD 9C 9H 9S 2D QC")  # ronda 2
+
+    filas = juego.bitacora(sala)
+    assert [(f["ronda"], f["turno"], f["jugador"], f["accion"]) for f in filas] == [
+        (1, 1, "Nico", "ROBAR_MAZO"), (1, 1, "Nico", "DESCARTAR"),
+        (1, 2, "Caro", "ROBAR_MAZO"), (1, 2, "Caro", "SOLICITAR_CIERRE"),
+        (2, 1, "Caro", "ROBAR_MAZO"), (2, 1, "Caro", "SOLICITAR_CIERRE"),  # la ronda 2 la abre Caro
+    ]
+    with conectar(uri) as cx:
+        assert cx.execute("SELECT count(*) FROM v_inconsistencias_marcador").fetchone()[0] == 0
+        assert cx.execute("SELECT count(*) FROM ronda r JOIN partida p USING (partida_id) JOIN sala s USING (sala_id) "
+                          "WHERE s.codigo_invitacion = %s AND r.estado = 'EN_JUEGO'", (sala,)).fetchone()[0] == 1
+
+    # Clásica en otra sala: la partida termina y el anfitrión empieza otra en la misma sala
+    sala = juego.crear_sala("Ana", "CLASICA_433").codigo
+    juego.unirse(sala, "Beto")
+    juego.empezar(sala, "Ana")
+    juego.robar(sala, "Ana", "MAZO")
+    juego._partidas.obtener(sala).mesa.manos["Ana"] = [desde_codigo(c) for c in "7H 7S 7D 7C 3C 4C 5C KS KH KD 2D".split()]
+    juego.cerrar(sala, "Ana")
+    juego.empezar(sala, "Ana")
+    with conectar(uri) as cx:
+        estados = cx.execute("SELECT p.estado, j.alias FROM partida p JOIN sala s USING (sala_id) "
+                             "LEFT JOIN jugador j ON j.jugador_id = p.ganador_id "
+                             "WHERE s.codigo_invitacion = %s ORDER BY p.iniciada_en", (sala,)).fetchall()
+    assert estados == [("FINALIZADA", f"Ana#{sala}"), ("EN_CURSO", None)]
+    assert [f["partida"] for f in juego.bitacora(sala)] == [1, 1]
