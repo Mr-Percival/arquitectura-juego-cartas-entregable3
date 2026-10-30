@@ -9,7 +9,7 @@ Arquitectura **microkernel**: un núcleo (sala, turnos, evaluación, puntuación
 
 ## Jugar
 
-- **En línea:** *(enlace de Render: pendiente de publicar)*. El plan gratuito se duerme tras 15 minutos sin uso; la primera visita tarda unos 30 segundos en despertarlo.
+- **En línea:** https://juego-cartas-xchq.onrender.com El plan gratuito se duerme tras 15 minutos sin uso; la primera visita tarda unos 30 segundos en despertarlo.
 - **En local con Docker** (levanta PostgreSQL 16 y el juego):
 
   ```bash
