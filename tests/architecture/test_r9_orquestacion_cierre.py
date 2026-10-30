@@ -37,6 +37,8 @@ class Bus:
         self.eventos, self.orden = [], orden
 
     def publicar(self, evento):
+        if evento.tipo != "RondaLiquidada":  # robar y descartar también publican; aquí interesa el cierre
+            return
         self.orden.append("publicar")
         self.eventos.append(evento)
 

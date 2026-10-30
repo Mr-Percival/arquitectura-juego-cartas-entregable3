@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesa de cartas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens: paño verde porque así reconoce la gente una mesa de cartas; ámbar = "te toca". */
+:root {
+  color-scheme: dark;
+  --pano: #1f4d3a;
+  --pano-oscuro: #153a2b;
+  --pano-borde: #2f6650;
+  --carta: #fbfaf6;
+  --carta-borde: #cfd6cf;
+  --pinta-roja: #c0262c;
+  --pinta-negra: #1b211e;
+  --texto: #eef3ef;
+  --texto-tenue: #b3c8ba;
+  --accion: #f2b632;
+  --accion-texto: #2a1f00;
+  --error-fondo: #fff0ec;
+  --error-texto: #8a1c12;
+  --ok-fondo: #e8f6ec;
+  --ok-texto: #14532d;
+  --combo-a: #f2b632;
+  --combo-b: #7cc4f2;
+  --combo-c: #f29bb6;
+
+  --t-xs: 13px; --t-s: 15px; --t-m: 18px; --t-l: 24px; --t-xl: 32px;
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 24px; --e-6: 32px;
+  --r-carta: 6px; --r-boton: 8px;
+
+  --carta-an: 56px; --carta-al: 80px;
+}
+@media (min-width: 900px) {
+  :root { --carta-an: 76px; --carta-al: 108px; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--pano-oscuro);
+  color: var(--texto);
+  font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+  font-size: var(--t-s);
+  line-height: 1.4;
+  min-height: 100vh;
+}
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accion); outline-offset: 2px; }
+.contenedor { max-width: 960px; margin: 0 auto; padding-block: var(--e-3) var(--e-6); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+[hidden] { display: none !important; }
+
+/* Botones */
+.btn {
+  min-height: 44px; padding: 0 var(--e-4);
+  border-radius: var(--r-boton); border: 2px solid var(--texto-tenue);
+  background: transparent; color: var(--texto); font-weight: 700;
+}
+.btn-principal { background: var(--accion); border-color: var(--accion); color: var(--accion-texto); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-principal:disabled { background: transparent; border-color: var(--texto-tenue); color: var(--texto); }
+
+/* ---------- Sala ---------- */
+.sala h1 { font-size: var(--t-xl); margin: var(--e-5) 0 var(--e-2); }
+.sala p.guia { color: var(--texto-tenue); margin: 0 0 var(--e-5); }
+.modos { display: grid; gap: var(--e-3); margin-bottom: var(--e-5); }
+@media (min-width: 700px) { .modos { grid-template-columns: 1fr 1fr; } }
+.modo {
+  text-align: left; padding: var(--e-4); border-radius: var(--r-boton);
+  border: 2px solid var(--pano-borde); background: var(--pano); color: var(--texto);
+}
+.modo[aria-pressed="true"] { border-color: var(--accion); }
+.modo strong::before { content: "○ "; }
+.modo[aria-pressed="true"] strong::before { content: "● "; color: var(--accion); }
+.sala h2 { font-size: var(--t-m); margin: var(--e-5) 0 var(--e-2); }
+.campo { display: flex; flex-direction: column; gap: var(--e-1); font-weight: 700; }
+.campo input, .unirse input { min-height: 44px; max-width: 16em; padding: 0 var(--e-3); border-radius: var(--r-boton); border: 2px solid var(--texto-tenue); background: var(--pano-oscuro); color: var(--texto); font: inherit; }
+.modo strong { display: block; font-size: var(--t-m); margin-bottom: var(--e-1); }
+.modo span { color: var(--texto-tenue); }
+.codigo { font-size: var(--t-xl); font-weight: 700; letter-spacing: 4px; color: var(--accion); }
+.jugadores-sala { list-style: none; padding: 0; margin: var(--e-3) 0 var(--e-5); }
+.jugadores-sala li { padding: var(--e-2) 0; border-bottom: 1px solid var(--pano-borde); }
+.fila { display: flex; gap: var(--e-3); flex-wrap: wrap; align-items: center; }
+.unirse input {
+  min-height: 44px; width: 9em; padding: 0 var(--e-3); border-radius: var(--r-boton);
+  border: 2px solid var(--texto-tenue); background: var(--pano-oscuro); color: var(--texto);
+  font: inherit; text-transform: uppercase; letter-spacing: 2px;
+}
+
+/* ---------- Juego ---------- */
+.cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e-3); flex-wrap: wrap; }
+.cabecera h1 { font-size: var(--t-m); margin: 0; }
+.cabecera .meta { color: var(--texto-tenue); font-size: var(--t-xs); }
+
+.rivales { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); margin: var(--e-3) 0; }
+.rival { padding: var(--e-2); border-radius: var(--r-boton); border: 2px solid transparent; background: var(--pano); min-width: 0; }
+.rival.en-turno { border-color: var(--accion); }
+.rival.eliminado { opacity: .5; }
+.rival .nombre { font-weight: 700; display: flex; justify-content: space-between; gap: var(--e-1); }
+.rival .estado { font-size: var(--t-xs); color: var(--texto-tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rival.en-turno .estado { color: var(--accion); }
+.puntos { font-size: var(--t-xs); margin-top: var(--e-1); }
+.barra { height: 6px; border-radius: 3px; background: var(--pano-oscuro); overflow: hidden; margin-top: 2px; }
+.barra i { display: block; height: 100%; background: var(--texto-tenue); }
+.barra i.cerca { background: var(--pinta-roja); }
+
+.mesa {
+  background: var(--pano); border-radius: var(--r-boton);
+  padding: var(--e-4); display: flex; justify-content: center; gap: var(--e-6);
+}
+.pila { display: flex; flex-direction: column; align-items: center; gap: var(--e-2); background: none; border: 0; color: var(--texto); padding: var(--e-2); border-radius: var(--r-boton); }
+.pila .etiqueta { font-weight: 700; }
+.pila .pista { font-size: var(--t-xs); color: var(--texto-tenue); }
+.pila .pista:empty { display: none; }
+.pila.activa { outline: 3px solid var(--accion); outline-offset: 2px; }
+.pila.activa .pista { color: var(--accion); }
+.dorso {
+  width: var(--carta-an); height: var(--carta-al); border-radius: var(--r-carta);
+  border: 3px solid var(--carta);
+  background: repeating-linear-gradient(45deg, #8f2a2a 0 6px, #a63a3a 6px 12px);
+  box-shadow: 2px 2px 0 var(--pano-oscuro), 4px 4px 0 var(--carta-borde);
+}
+
+.bitacora { font-size: var(--t-xs); color: var(--texto-tenue); text-align: center; margin: var(--e-2) 0; min-height: 1.4em; }
+
+.aviso {
+  padding: var(--e-3) var(--e-4); border-radius: var(--r-boton);
+  font-weight: 700; background: var(--pano); color: var(--texto); margin: var(--e-3) 0;
+}
+.aviso.tu-turno { background: var(--accion); color: var(--accion-texto); }
+
+.resumen-mano { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e-3); flex-wrap: wrap; margin-bottom: var(--e-2); }
+.resumen-mano .dato { font-size: var(--t-m); font-weight: 700; }
+.resumen-mano .mio { font-weight: 700; min-width: 9em; }
+.resumen-mano .regla { flex-basis: 100%; font-size: var(--t-xs); color: var(--texto-tenue); }
+
+/* Mano: las cartas se solapan en el celular y se abren en el computador. */
+.mano { display: flex; padding-top: var(--e-4); min-height: calc(var(--carta-al) + var(--e-5) + 10px); }
+.mano .carta { flex: 0 0 auto; margin-left: var(--paso, -26px); }
+.mano .carta:first-child { margin-left: 0; }
+.carta {
+  display: inline-block; position: relative; width: var(--carta-an); height: var(--carta-al);
+  background: var(--carta); border: 1px solid var(--carta-borde); border-radius: var(--r-carta);
+  box-shadow: -2px 0 4px rgba(0,0,0,.25);
+  padding: 3px 4px; text-align: left; color: var(--pinta-negra);
+  transition: transform .12s;
+}
+.carta.roja { color: var(--pinta-roja); }
+.carta .indice { font-weight: 700; font-size: var(--t-m); line-height: 1; display: flex; flex-direction: column; align-items: center; width: 1.3em; }
+.carta .indice small { font-size: var(--t-m); }
+.carta .centro { position: absolute; right: 6px; bottom: 4px; font-size: var(--t-l); line-height: 1; }
+.mano .carta.sel { transform: translateY(-14px); outline: 3px solid var(--accion); outline-offset: 1px; }
+.carta.nueva::after {
+  content: "nueva"; position: absolute; top: -18px; left: 0; font-size: 11px; font-weight: 700;
+  color: var(--accion); white-space: nowrap;
+}
+.carta .marca { position: absolute; left: 0; right: 0; bottom: -10px; height: 5px; border-radius: 2px; }
+.leyenda { display: flex; flex-wrap: wrap; gap: var(--e-2) var(--e-4); font-size: var(--t-xs); margin-top: var(--e-2); min-height: 1.4em; }
+.leyenda span::before { content: ""; display: inline-block; width: 12px; height: 5px; border-radius: 2px; background: var(--c); margin-right: var(--e-1); vertical-align: middle; }
+
+.mover { display: flex; gap: var(--e-2); align-items: center; font-size: var(--t-xs); color: var(--texto-tenue); min-height: 44px; margin-top: var(--e-2); }
+.mover .btn { min-width: 44px; padding: 0 var(--e-3); }
+
+.acciones { display: grid; grid-template-columns: auto 1fr 1fr; gap: var(--e-2); margin-top: var(--e-2); }
+.mensaje { margin: calc(-1 * var(--e-1)) 0 var(--e-3); padding: var(--e-3) var(--e-4); border-radius: var(--r-boton); }
+.mensaje.error { background: var(--error-fondo); color: var(--error-texto); }
+.mensaje.error strong { display: block; }
+
+/* Resumen de ronda */
+dialog {
+  border: 0; border-radius: var(--r-boton); padding: var(--e-5);
+  background: var(--carta); color: var(--pinta-negra); width: min(520px, calc(100vw - 32px));
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+dialog::backdrop { background: rgba(10, 30, 22, .7); }
+dialog h2 { margin: 0 0 var(--e-2); font-size: var(--t-l); }
+dialog p { margin: 0 0 var(--e-4); }
+dialog table { width: 100%; border-collapse: collapse; margin-bottom: var(--e-5); }
+dialog th, dialog td { text-align: left; padding: var(--e-2) var(--e-1); border-bottom: 1px solid var(--carta-borde); }
+dialog td.num, dialog th.num { text-align: right; }
+dialog .eliminado-tag { color: var(--pinta-roja); font-weight: 700; }
+dialog .barra { background: #e2e6e1; }
+dialog .barra i { background: #6b7a70; }
+dialog .barra i.cerca { background: var(--pinta-roja); }
+dialog .btn-principal { width: 100%; }
+
+.hueco { display: block; width: var(--carta-an); height: var(--carta-al); border-radius: var(--r-carta); border: 2px dashed var(--pano-borde); }
+.sala .espera { color: var(--texto-tenue); }
+.salir { margin-top: var(--e-6); background: none; border: 0; color: var(--texto-tenue); text-decoration: underline; min-height: 44px; padding: 0; }
+.conexion { position: fixed; left: 0; right: 0; bottom: 0; padding: var(--e-2) max(16px, env(safe-area-inset-left, 0px)) calc(var(--e-2) + env(safe-area-inset-bottom, 0px)); background: var(--error-fondo); color: var(--error-texto); font-weight: 700; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) { .carta { transition: none; } }
+</style>
+</head>
+<body>
+<main class="contenedor">
+
+  <!-- ============ SALA (H1) ============ -->
+  <section id="vista-sala" class="sala">
+    <h1>Jugar cartas</h1>
+    <label class="campo">Tu nombre <input id="nombre" maxlength="12" autocomplete="nickname"></label>
+    <div id="entrar">
+      <h2>¿Te pasaron un código?</h2>
+      <div class="fila unirse"><input id="codigo-unirse" maxlength="6" placeholder="Código" aria-label="Código de sala" autocomplete="off"><button class="btn" id="unirse">Unirme</button></div>
+      <h2>O crea una partida</h2>
+      <p class="guia">Elige la modalidad y comparte el código con 1 a 3 personas más.</p>
+      <div class="modos" role="group" aria-label="Modalidad">
+        <button class="modo" data-variante="APUNTADO_101" aria-pressed="true">
+          <strong>Apuntado a 101</strong>
+          <span>Cierra con 3 ternas o escaleras y menos de 5 puntos sueltos. A los demás se les suman sus puntos; quien llega a 101 queda fuera.</span>
+        </button>
+        <button class="modo" data-variante="CLASICA_433" aria-pressed="false">
+          <strong>Clásica 4-3-3</strong>
+          <span>Gana la ronda quien cierre con 1 cuarta, 2 ternas y 1 carta para descartar.</span>
+        </button>
+      </div>
+      <button id="crear-sala" class="btn btn-principal">Crear sala</button>
+    </div>
+    <div class="mensaje error" id="mensaje-sala" role="alert" hidden></div>
+    <div id="en-sala" hidden>
+      <p>Código de la sala: <span class="codigo" id="codigo-sala"></span></p>
+      <p class="guia" style="margin:0" id="guia-sala"></p>
+      <ul class="jugadores-sala" id="lista-sala"></ul>
+      <button id="empezar" class="btn btn-principal" hidden>Empezar partida</button>
+      <p class="espera" id="espera-sala"></p>
+      <button class="salir" id="salir-sala">Salir de esta sala</button>
+    </div>
+  </section>
+
+  <!-- ============ JUEGO (H2) ============ -->
+  <section id="vista-juego" hidden>
+    <div class="cabecera">
+      <h1 id="titulo-modo"></h1>
+      <span class="meta">Sala <span id="meta-sala"></span>, <span id="ronda"></span></span>
+    </div>
+
+    <div class="rivales" id="rivales"></div>
+
+    <div class="mesa">
+      <button class="pila" id="mazo" aria-label="Mazo">
+        <span class="dorso"></span>
+        <span class="etiqueta">Mazo <span id="n-mazo"></span></span>
+        <span class="pista" id="pista-mazo"></span>
+      </button>
+      <button class="pila" id="pozo" aria-label="Pozo de descarte">
+        <span id="pozo-carta"></span>
+        <span class="etiqueta">Pozo</span>
+        <span class="pista" id="pista-pozo"></span>
+      </button>
+    </div>
+    <p class="bitacora" id="bitacora" aria-live="polite"></p>
+
+    <div class="aviso" id="aviso" aria-live="polite"></div>
+    <div class="mensaje error" id="mensaje" role="alert" hidden></div>
+
+    <div class="resumen-mano">
+      <span class="dato" id="dato-mano"></span>
+      <span class="regla" id="regla-mano"></span>
+    </div>
+    <div class="mano" id="mano" aria-label="Tu mano"></div>
+    <div class="leyenda" id="leyenda"></div>
+
+    <div class="mover" id="mover" hidden>
+      <button class="btn" id="mover-izq" aria-label="Mover a la izquierda">&#9664;</button>
+      <button class="btn" id="mover-der" aria-label="Mover a la derecha">&#9654;</button>
+      <span>Mueve la carta elegida para ordenar tu mano</span>
+    </div>
+
+    <div class="acciones">
+      <button class="btn" id="ordenar">Ordenar</button>
+      <button class="btn btn-principal" id="descartar" disabled>Descartar</button>
+      <button class="btn" id="cerrar" disabled title="Llega con las historias H3 y H4">Cerrar ronda</button>
+    </div>
+  </section>
+</main>
+<div class="conexion" id="conexion" role="status" hidden>Sin conexión con el servidor. Reintentando…</div>
+
+<script>
+/* La pantalla no aplica reglas: el servidor (núcleo y plug-ins) decide y le manda a cada jugador su vista. */
+const PINTAS = { H: "♥︎", D: "♦︎", C: "♣︎", S: "♠︎" };
+const NOMBRE_PINTA = { H: "corazones", D: "diamantes", C: "tréboles", S: "picas" };
+const VALOR = { A: 1, J: 11, Q: 12, K: 13 };
+const TITULO = { APUNTADO_101: "Apuntado a 101", CLASICA_433: "Clásica 4-3-3" };
+
+const $ = id => document.getElementById(id);
+const rango = cod => cod === "JK" ? null : cod.slice(0, -1);
+const pinta = cod => cod === "JK" ? null : cod.slice(-1);
+const orden = cod => cod === "JK" ? 99 : (VALOR[rango(cod)] || Number(rango(cod)));
+const etiqueta = cod => cod === "JK" ? "Comodín" : rango(cod) + PINTAS[pinta(cod)];
+const nombreLargo = cod => cod === "JK" ? "comodín" : `${rango(cod)} de ${NOMBRE_PINTA[pinta(cod)]}`;
+const esRoja = cod => pinta(cod) === "H" || pinta(cod) === "D";
+const mayus = t => t[0].toUpperCase() + t.slice(1);
+const enumerar = xs => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " y " + xs.at(-1);
+const guardar = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+const leer = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+/* ---------- Estado local ---------- */
+let ws = null, V = null, variante = "APUNTADO_101";
+let mano = [];      // orden en que el jugador acomodó su mano (solo vive en su pantalla)
+let sel = null;     // índice de la carta elegida
+
+/* Conserva el orden del jugador: las cartas que siguen quedan donde estaban y las nuevas van al final. */
+function reconciliar(delServidor) {
+  const quedan = delServidor.slice(), nueva = [];
+  for (const c of mano) { const i = quedan.indexOf(c); if (i >= 0) { nueva.push(c); quedan.splice(i, 1); } }
+  mano = nueva.concat(quedan);
+  if (sel !== null && sel >= mano.length) sel = null;
+}
+
+/* ---------- Conexión ---------- */
+function conectar() {
+  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
+  ws.onopen = () => {
+    $("conexion").hidden = true;
+    const token = leer("token");
+    if (token) enviar({ accion: "reconectar", token });
+  };
+  ws.onmessage = e => recibir(JSON.parse(e.data));
+  ws.onclose = () => { $("conexion").hidden = false; setTimeout(conectar, 1500); };
+}
+function enviar(datos) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(datos));
+  else mostrarError("Sin conexión con el servidor.", "Espera un momento y vuelve a intentarlo.");
+}
+function recibir(m) {
+  if (m.tipo === "sesion") { guardar("token", m.token); return; }
+  if (m.tipo === "error") {
+    if (m.accion === "reconectar") { guardar("token", null); return pintar(); }
+    return mostrarError(m.mensaje);
+  }
+  if (m.tipo === "estado") {
+    const turnoAntes = V && V.partida && V.partida.en_turno;
+    V = m;
+    if (V.partida) reconciliar(V.partida.mano);
+    if (!V.partida || V.partida.en_turno !== turnoAntes) ocultarError();
+    pintar();
+  }
+}
+
+/* ---------- Pintar ---------- */
+function pintar() {
+  const enPartida = V && V.partida;
+  $("vista-sala").hidden = !!enPartida;
+  $("vista-juego").hidden = !enPartida;
+  enPartida ? pintarJuego() : pintarSala();
+}
+
+function pintarSala() {
+  const dentro = !!V;
+  $("entrar").hidden = dentro;
+  $("en-sala").hidden = !dentro;
+  $("nombre").disabled = dentro;
+  if (!dentro) return;
+  const anfitrion = V.yo === V.anfitrion, n = V.jugadores.length;
+  $("codigo-sala").textContent = V.sala;
+  $("guia-sala").textContent = `${TITULO[V.variante]}. Quienes entren con este código aparecen aquí (máximo ${V.capacidad} jugadores).`;
+  $("lista-sala").innerHTML = V.jugadores.map(j =>
+    `<li>${esc(j.nombre)}${j.nombre === V.yo ? " (tú)" : ""}${j.nombre === V.anfitrion ? ", creó la sala" : ""}</li>`).join("");
+  $("empezar").hidden = !anfitrion;
+  $("empezar").disabled = n < 2;
+  $("espera-sala").textContent = anfitrion
+    ? (n < 2 ? "Comparte el código: hace falta al menos otra persona." : "")
+    : `Espera a que ${V.anfitrion} empiece la partida.`;
+}
+
+function htmlCarta(cod, extra = "") {
+  if (cod === "JK") return `<span class="carta ${extra}"><span class="indice">★</span><span class="centro">★</span></span>`;
+  return `<span class="carta ${esRoja(cod) ? "roja" : ""} ${extra}"><span class="indice">${rango(cod)}<small>${PINTAS[pinta(cod)]}</small></span><span class="centro">${PINTAS[pinta(cod)]}</span></span>`;
+}
+
+function textoJugada(j, yo) {
+  const quien = j.jugador === yo ? "Tú" : j.jugador;
+  const tu = j.jugador === yo;
+  if (j.accion === "ROBAR_MAZO") return `${quien} ${tu ? "robaste" : "robó"} del mazo`;
+  if (j.accion === "ROBAR_POZO") return `${quien} ${tu ? "tomaste" : "tomó"} ${etiqueta(j.carta)} del pozo`;
+  if (j.accion === "DESCARTAR") return `${quien} ${tu ? "descartaste" : "descartó"} ${etiqueta(j.carta)}`;
+  return "";
+}
+
+function describirCombo(co) {
+  const nat = co.cartas.filter(c => c !== "JK").sort((a, b) => orden(a) - orden(b));
+  const tam = co.cartas.length === 3 ? "terna" : "cuarta";
+  if (co.tipo === "GRUPO") return `${tam} de ${rango(nat[0])}`;
+  const nombres = { 1: "A", 11: "J", 12: "Q", 13: "K" };
+  const rs = []; for (let r = orden(nat[0]); rs.length < co.cartas.length; r++) rs.push(nombres[r] || r);
+  return `escalera ${rs.join("-")}${PINTAS[pinta(nat[0])]}`;
+}
+function resumenCombos(combos) {
+  const cu = combos.filter(c => c.cartas.length === 4).length, te = combos.length - cu;
+  const partes = [];
+  if (cu) partes.push(`${cu} cuarta${cu > 1 ? "s" : ""}`);
+  if (te) partes.push(`${te} terna${te > 1 ? "s" : ""}`);
+  return partes.join(" y ") || "ninguna combinación";
+}
+
+function pintarJuego() {
+  const P = V.partida, ap = V.variante === "APUNTADO_101";
+  const miTurno = P.en_turno === V.yo, robo = miTurno && P.fase === "ESPERANDO_ROBO";
+  const descarte = miTurno && P.fase === "ESPERANDO_DESCARTE";
+  $("titulo-modo").textContent = TITULO[V.variante];
+  $("meta-sala").textContent = V.sala;
+  $("ronda").textContent = "ronda " + P.ronda;
+
+  const rivales = V.jugadores.filter(j => j.nombre !== V.yo);
+  $("rivales").style.gridTemplateColumns = `repeat(${Math.max(rivales.length, 1)}, 1fr)`;
+  $("rivales").innerHTML = rivales.map(j => {
+    const turno = P.en_turno === j.nombre;
+    return `<div class="rival ${turno ? "en-turno" : ""}">
+      <div class="nombre">${esc(j.nombre)}</div>
+      <div class="estado">${turno ? "Jugando, " : ""}${j.cartas} cartas</div>
+    </div>`;
+  }).join("");
+
+  $("n-mazo").textContent = `(${P.mazo})`;
+  $("pozo-carta").innerHTML = P.pozo ? htmlCarta(P.pozo) : '<span class="hueco"></span>';
+  $("mazo").classList.toggle("activa", robo);
+  $("pozo").classList.toggle("activa", robo && !!P.pozo);
+  $("pista-mazo").textContent = robo ? "Robar oculta" : "";
+  $("pista-pozo").textContent = robo && P.pozo ? "Tomar " + etiqueta(P.pozo) : "";
+  $("mazo").setAttribute("aria-label", robo ? "Robar del mazo, carta oculta" : "Mazo");
+  $("pozo").setAttribute("aria-label", robo && P.pozo ? "Tomar del pozo el " + nombreLargo(P.pozo) : "Pozo de descarte");
+  const ultima = P.bitacora.at(-1);
+  $("bitacora").textContent = ultima ? textoJugada(ultima, V.yo) : "";
+
+  const aviso = $("aviso");
+  aviso.classList.toggle("tu-turno", miTurno);
+  aviso.textContent =
+    !miTurno ? `Turno de ${P.en_turno}. Espera tu turno.` :
+    robo ? "Tu turno: toma una carta del mazo o del pozo." :
+    sel === null ? "Toca la carta que quieres descartar." :
+    `Descarta ${etiqueta(mano[sel])} con el botón.`;
+
+  // Contador junto a la mano (lo calcula el servidor con la tabla de la variante)
+  const A = P.analisis;
+  if (ap) {
+    $("dato-mano").textContent = `Puntos sueltos: ${A.puntos_sueltos}`;
+    $("regla-mano").textContent = A.sin_contar
+      ? `Sin contar ${etiqueta(A.sin_contar)}: al cerrar se descarta sola tu carta suelta más alta. Para cerrar: 3 ternas o escaleras y menos de 5 sueltos.`
+      : "Para cerrar: 3 ternas o escaleras y menos de 5 puntos sueltos.";
+  } else {
+    $("dato-mano").textContent = "Tienes " + resumenCombos(A.combos);
+    $("regla-mano").textContent = "Para cerrar: 1 cuarta + 2 ternas + 1 descarte.";
+  }
+
+  // Mano, con una marca de color por combinación
+  const colores = ["var(--combo-a)", "var(--combo-b)", "var(--combo-c)"];
+  const colorDe = marcarCombos(A.combos, colores);
+  const cont = $("mano");
+  const ancho = cont.clientWidth || 358, an = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--carta-an"));
+  const paso = Math.min(an + 6, (ancho - an) / Math.max(1, mano.length - 1));
+  cont.style.setProperty("--paso", (paso - an) + "px");
+  cont.innerHTML = mano.map((c, i) => `<button class="carta ${esRoja(c) ? "roja" : ""} ${sel === i ? "sel" : ""} ${P.nueva === c && miTurno ? "nueva" : ""}" data-i="${i}" aria-pressed="${sel === i}" aria-label="${nombreLargo(c)}">
+      ${c === "JK" ? '<span class="indice">★</span>' : `<span class="indice">${rango(c)}<small>${PINTAS[pinta(c)]}</small></span><span class="centro">${PINTAS[pinta(c)]}</span>`}
+      ${colorDe[i] ? `<span class="marca" style="background:${colorDe[i]}"></span>` : ""}
+    </button>`).join("");
+  $("leyenda").innerHTML = A.combos.map((co, i) => `<span style="--c:${colores[i % 3]}">${mayus(describirCombo(co))}</span>`).join("");
+
+  $("mover").hidden = sel === null;
+  const d = $("descartar");
+  d.disabled = !(descarte && sel !== null);
+  d.textContent = descarte && sel !== null ? "Descartar " + etiqueta(mano[sel]) : "Descartar";
+}
+
+/* A cada posición de la mano le toca el color de la combinación en que está (las cartas repetidas se reparten). */
+function marcarCombos(combos, colores) {
+  const libres = mano.map((c, i) => i), color = [];
+  combos.forEach((co, k) => co.cartas.forEach(c => {
+    const j = libres.findIndex(i => mano[i] === c);
+    if (j >= 0) { color[libres[j]] = colores[k % 3]; libres.splice(j, 1); }
+  }));
+  return color;
+}
+
+function mostrarError(titulo, detalle) {
+  const m = V && V.partida ? $("mensaje") : $("mensaje-sala");
+  m.innerHTML = `<strong>${esc(titulo)}</strong>${detalle ? esc(detalle) : ""}`;
+  m.hidden = false;
+  m.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function ocultarError() { $("mensaje").hidden = true; $("mensaje-sala").hidden = true; }
+function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* ---------- Acciones ---------- */
+function nombre() { const n = $("nombre").value.trim(); guardar("nombre", n); return n; }
+document.querySelectorAll(".modo").forEach(b => b.onclick = () => {
+  variante = b.dataset.variante;
+  document.querySelectorAll(".modo").forEach(x => x.setAttribute("aria-pressed", x === b));
+});
+$("crear-sala").onclick = () => { ocultarError(); enviar({ accion: "crear", nombre: nombre(), variante }); };
+$("unirse").onclick = () => { ocultarError(); enviar({ accion: "unirse", nombre: nombre(), sala: $("codigo-unirse").value.trim() }); };
+$("codigo-unirse").onkeydown = e => { if (e.key === "Enter") $("unirse").click(); };
+$("empezar").onclick = () => enviar({ accion: "empezar" });
+$("salir-sala").onclick = () => { guardar("token", null); V = null; mano = []; sel = null; ws.close(); pintar(); };
+
+$("mazo").onclick = () => { ocultarError(); enviar({ accion: "robar", origen: "MAZO" }); };
+$("pozo").onclick = () => { ocultarError(); enviar({ accion: "robar", origen: "POZO" }); };
+$("mano").onclick = e => {
+  const b = e.target.closest(".carta"); if (!b) return;
+  const i = Number(b.dataset.i);
+  sel = sel === i ? null : i; pintar();
+};
+$("descartar").onclick = () => {
+  if (sel === null) return;
+  const carta = mano[sel];
+  sel = null; ocultarError();
+  enviar({ accion: "descartar", carta });
+};
+$("mover-izq").onclick = () => mover(-1);
+$("mover-der").onclick = () => mover(1);
+$("ordenar").onclick = () => {
+  const enCombo = V.partida.analisis.combos.flatMap(co => co.cartas.slice().sort((a, b) => orden(a) - orden(b)));
+  const resto = mano.slice();
+  enCombo.forEach(c => resto.splice(resto.indexOf(c), 1));
+  resto.sort((a, b) => orden(a) - orden(b) || String(pinta(a)).localeCompare(String(pinta(b))));
+  mano = enCombo.concat(resto); sel = null; pintar();
+};
+function mover(dir) {
+  const i = sel, j = i + dir;
+  if (i === null || j < 0 || j >= mano.length) return;
+  [mano[i], mano[j]] = [mano[j], mano[i]];
+  sel = j; pintar();
+}
+addEventListener("resize", () => V && V.partida && pintar());
+
+/* El código puede venir en el enlace: …/#K7Q2MX */
+$("nombre").value = leer("nombre") || "";
+if (location.hash.length > 1) $("codigo-unirse").value = location.hash.slice(1).toUpperCase();
+pintar();
+conectar();
+</script>
+</body>
+</html>

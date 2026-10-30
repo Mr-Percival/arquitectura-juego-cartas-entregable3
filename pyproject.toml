@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "juegocartas"
-version = "0.0.2"
+version = "0.0.3"
 description = "Sistema Digital de Juego de Cartas - microkernel: núcleo + plug-ins de reglas"
 requires-python = ">=3.11"
-dependencies = ["psycopg[binary]>=3.1"]
+dependencies = ["psycopg[binary]>=3.1", "fastapi>=0.110", "uvicorn[standard]>=0.29"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "PyTestArch>=5", "radon>=6", "psycopg[binary]>=3.1", "pgserver>=0.1"]
+dev = ["pytest>=8", "httpx>=0.27", "PyTestArch>=5", "radon>=6", "psycopg[binary]>=3.1", "pgserver>=0.1"]
 
 # Plug-ins de referencia. El núcleo los descubre por este grupo de entry points (ADR-03):
 # una variante nueva (p. ej. Continental) se publica como otra distribución que declara
@@ -21,6 +21,9 @@ APUNTADO_101 = "juegocartas.plugins.apuntado:ReglaApuntadoPlugin"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"juegocartas.presentacion" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

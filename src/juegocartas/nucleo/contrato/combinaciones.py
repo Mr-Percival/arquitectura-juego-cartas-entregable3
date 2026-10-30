@@ -5,8 +5,9 @@ depende de otro (regla de gobernanza R2).
 """
 from __future__ import annotations
 
-from itertools import combinations
-from typing import Iterator, Sequence
+from functools import lru_cache
+from itertools import chain, combinations
+from typing import Callable, Iterator, Sequence
 
 from .modelo import Carta, Combinacion, TipoCombinacion
 
@@ -57,3 +58,31 @@ def particiones(mano: Sequence[Carta], tamanos: Sequence[int]) -> Iterator[tuple
         restantes = [c for i, c in enumerate(mano) if i not in indices]
         for otras, sobrantes in particiones(restantes, resto):
             yield [combo, *otras], sobrantes
+
+
+def mejor_cobertura(mano: Sequence[Carta], costo: Callable[[Carta], int]) -> tuple[list[Combinacion], list[Carta]]:
+    """Agrupa la mano en combinaciones de 3 o 4 cartas dejando sueltas las de menor costo total.
+
+    Sirve para mostrarle al jugador qué ya formó y cuánto le queda suelto; no decide un cierre
+    (eso lo hace la regla de cada plug-in). Programación dinámica sobre los subconjuntos de la mano.
+    """
+    @lru_cache(maxsize=None)
+    def mejor(mascara: int) -> tuple[int, tuple[tuple[int, ...], ...]]:
+        if mascara == 0:
+            return 0, ()
+        primero, *resto = [i for i in range(len(mano)) if mascara >> i & 1]
+        sin_usar = mejor(mascara & ~(1 << primero))
+        opcion = (sin_usar[0] + costo(mano[primero]), sin_usar[1])
+        for otros in chain(combinations(resto, 2), combinations(resto, 3)):
+            grupo = (primero, *otros)
+            if clasificar([mano[i] for i in grupo]) is None:
+                continue
+            costo_resto, grupos = mejor(mascara & ~sum(1 << i for i in grupo))
+            if costo_resto < opcion[0]:
+                opcion = (costo_resto, (grupo, *grupos))
+        return opcion
+
+    _, grupos = mejor((1 << len(mano)) - 1)
+    usados = {i for grupo in grupos for i in grupo}
+    return ([clasificar([mano[i] for i in grupo]) for grupo in grupos],
+            [c for i, c in enumerate(mano) if i not in usados])
