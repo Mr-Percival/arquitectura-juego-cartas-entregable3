@@ -175,7 +175,13 @@ class GameService:
     # ---------- Consulta ----------
     def bitacora(self, codigo_sala: str) -> list[dict]:
         """La bitácora de auditoría de la sala (H6): solo rondas ya cerradas, para no revelar manos."""
-        return self._bitacora.consultar_bitacora(self._salas.obtener(codigo_sala).codigo)
+        try:
+            return self._bitacora.consultar_bitacora(self._salas.obtener(codigo_sala).codigo)
+        except ErrorSala:  # la sala ya no está en memoria (p. ej., el servidor se reinició): lo cerrado sigue en la base
+            filas = self._bitacora.consultar_bitacora((codigo_sala or "").strip().upper())
+            if not filas:
+                raise
+            return filas
 
     def vista(self, codigo_sala: str, jugador: str) -> dict[str, Any]:
         """Lo que ve un jugador: la sala, y si hay partida, su mano y lo público de la mesa."""

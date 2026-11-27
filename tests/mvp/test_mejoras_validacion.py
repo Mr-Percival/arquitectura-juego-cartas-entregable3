@@ -44,3 +44,11 @@ def test_avisa_que_falta_antes_de_intentar(juego, sala):
 def test_sin_la_carta_del_turno_no_se_evalua(juego, sala):
     analisis = juego.vista(sala, "Caro")["partida"]["analisis"]
     assert analisis["puede_cerrar"] is False and analisis["motivo_cierre"] is None
+
+
+def test_bitacora_sin_la_sala_en_memoria_consulta_por_codigo(juego, sala):
+    """Tras un reinicio la sala ya no está en memoria, pero su bitácora se pide igual por el código."""
+    con_mano(juego, sala, "Nico", "7H 7S 7D 7C 3C 4C 5C KS KH KD 2D")
+    juego.cerrar(sala, "Nico")
+    juego._salas._salas.clear()  # como si el servidor se hubiera reiniciado
+    assert any(f["accion"] == "SOLICITAR_CIERRE" for f in juego.bitacora(sala.lower()))
