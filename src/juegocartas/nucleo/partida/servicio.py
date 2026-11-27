@@ -191,6 +191,7 @@ class GameService:
             "anfitrion": sala.anfitrion, "capacidad": sala.capacidad, "yo": jugador,
             "jugadores": [{"nombre": j, "cartas": len(manos.get(j, ())), "puntos": saldos.get(j, 0),
                            "fuera": j in fuera} for j in sala.jugadores],
+            "reglas": list(getattr(self._variantes.resolver(sala.variante), "reglas", ())),
             "partida": None,
         }
         if partida:
@@ -229,10 +230,15 @@ class GameService:
         combos, sueltas = cartas_sueltas(mano, tabla.puntos)
         # Con la carta del turno en la mano, al cerrar sale una: se cuenta sin la suelta más alta.
         descarte = max(sueltas, key=tabla.puntos) if sueltas and len(mano) > CARTAS_POR_MANO else None
+        # Mejora 2 de la validación: avisar si ya se puede cerrar, con el motivo que da la regla del plug-in.
+        cierre = (self._variantes.resolver(sala.variante).regla_cierre(sala.config).evaluar(mano)
+                  if len(mano) > CARTAS_POR_MANO else None)
         return {
             "combos": [{"tipo": c.tipo.value, "cartas": [codigo(x) for x in c.cartas]} for c in combos],
             "puntos_sueltos": sum(tabla.puntos(c) for c in sueltas) - (tabla.puntos(descarte) if descarte else 0),
             "sin_contar": codigo(descarte) if descarte else None,
+            "puede_cerrar": bool(cierre and cierre.valida),
+            "motivo_cierre": cierre.motivo_rechazo if cierre and not cierre.valida else None,
         }
 
     def _partida(self, codigo_sala: str) -> Partida:

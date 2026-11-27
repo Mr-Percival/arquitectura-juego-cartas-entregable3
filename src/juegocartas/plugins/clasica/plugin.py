@@ -58,6 +58,13 @@ class FinEnUnaRonda:
 class ReglaClasicaPlugin:
     codigo = "CLASICA_433"
     version_contrato = VERSION_CONTRATO
+    # Ayuda para el jugador (mejora 1 de la validación): la trae el plug-in, no el núcleo ni la pantalla.
+    reglas = (
+        "Cada jugador recibe 10 cartas. En tu turno tomas 1 carta del mazo (boca abajo) o del pozo (boca arriba) y descartas 1.",
+        "Terna: 3 cartas del mismo número, o 3 seguidas de la misma pinta (escalera). Cuarta: lo mismo con 4 cartas.",
+        "Cierras cuando tienes 1 cuarta + 2 ternas y te sobra 1 carta para descartar. Quien cierra primero gana la ronda.",
+        "El comodín (★) reemplaza cualquier carta.",
+    )
 
     def esquema_configuracion(self) -> Mapping[str, Any]:
         return {

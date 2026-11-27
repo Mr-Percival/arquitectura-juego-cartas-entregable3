@@ -193,6 +193,15 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
 .sala .espera { color: var(--texto-tenue); }
 .salir { margin-top: var(--e-6); background: none; border: 0; color: var(--texto-tenue); text-decoration: underline; min-height: 44px; padding: 0; }
 .sin-red { color: var(--combo-c); font-weight: 700; }
+/* Mejora 4: con la mano llena en pantallas angostas, dos filas sin solape (objetivos de 56 px, WCAG 2.5.5) */
+.mano.dos-filas { flex-wrap: wrap; gap: var(--e-4) 3px; }
+.mano.dos-filas .carta { margin-left: 0; }
+.pista-cerrar { font-size: var(--t-xs); color: var(--texto-tenue); margin: var(--e-2) 0 0; min-height: 1.4em; }
+.pista-cerrar.lista { color: var(--accion); font-weight: 700; }
+#cerrar.listo { background: var(--accion); border-color: var(--accion); color: var(--accion-texto); }
+.btn-ayuda { min-height: 44px; background: none; border: 0; color: var(--texto); text-decoration: underline; padding: 0 var(--e-1); font-size: var(--t-xs); }
+dialog ol { padding-left: 1.2em; margin: 0 0 var(--e-4); }
+dialog li { margin-bottom: var(--e-2); }
 .conexion .btn { margin-left: var(--e-2); }
 .conexion { position: fixed; left: 0; right: 0; bottom: 0; padding: var(--e-2) max(16px, env(safe-area-inset-left, 0px)) calc(var(--e-2) + env(safe-area-inset-bottom, 0px)); background: var(--error-fondo); color: var(--error-texto); font-weight: 700; text-align: center; }
 
@@ -228,6 +237,7 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
       <p>Código de la sala: <span class="codigo" id="codigo-sala"></span></p>
       <p class="guia" style="margin:0" id="guia-sala"></p>
       <ul class="jugadores-sala" id="lista-sala"></ul>
+      <button class="btn" id="ayuda-sala">¿Cómo se juega?</button>
       <button id="empezar" class="btn btn-principal" hidden>Empezar partida</button>
       <p class="espera" id="espera-sala"></p>
       <button class="salir" id="salir-sala">Salir de esta sala</button>
@@ -238,7 +248,7 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
   <section id="vista-juego" hidden>
     <div class="cabecera">
       <h1 id="titulo-modo"></h1>
-      <span class="meta">Sala <span id="meta-sala"></span>, <span id="ronda"></span></span>
+      <span class="meta">Sala <span id="meta-sala"></span>, <span id="ronda"></span> <button class="btn-ayuda" id="ayuda-juego">¿Cómo se juega?</button></span>
     </div>
 
     <div class="rivales" id="rivales"></div>
@@ -279,7 +289,15 @@ dialog .salir { display: block; margin: var(--e-3) auto 0; color: #4d5c53; }
       <button class="btn btn-principal" id="descartar" disabled>Descartar</button>
       <button class="btn" id="cerrar" disabled>Cerrar ronda</button>
     </div>
+    <p class="pista-cerrar" id="pista-cerrar" aria-live="polite"></p>
   </section>
+
+  <!-- ============ REGLAS (mejora 1): el texto lo trae el plug-in de la modalidad ============ -->
+  <dialog id="reglas">
+    <h2 id="reglas-titulo"></h2>
+    <ol id="reglas-lista"></ol>
+    <button class="btn btn-principal" id="reglas-ok">Entendido</button>
+  </dialog>
 
   <!-- ============ RESUMEN DE RONDA (H3 y H4) ============ -->
   <dialog id="resumen">
@@ -430,7 +448,7 @@ function pintarJuego() {
     const turno = !fin && P.en_turno === j.nombre;
     return `<div class="rival ${turno ? "en-turno" : ""} ${j.fuera ? "eliminado" : ""}">
       <div class="nombre">${esc(j.nombre)}</div>
-      <div class="estado">${j.fuera ? `Llegó a ${meta()}, fuera` : !conectado(j) ? '<span class="sin-red">Sin conexión</span>' : (turno ? "Jugando, " : "") + j.cartas + " cartas"}</div>
+      <div class="estado">${j.fuera ? `Llegó a ${meta()}, fuera` : !conectado(j) ? '<span class="sin-red">Sin conexión</span>' : (turno ? (P.fase === "ESPERANDO_ROBO" ? "Tomando carta… " : "Eligiendo descarte… ") : "") + j.cartas + " cartas"}</div>
       ${ap ? marcador(j.puntos) : ""}
     </div>`;
   }).join("");
@@ -439,8 +457,8 @@ function pintarJuego() {
   $("pozo-carta").innerHTML = P.pozo ? htmlCarta(P.pozo) : '<span class="hueco"></span>';
   $("mazo").classList.toggle("activa", robo);
   $("pozo").classList.toggle("activa", robo && !!P.pozo);
-  $("pista-mazo").textContent = robo ? "Robar oculta" : "";
-  $("pista-pozo").textContent = robo && P.pozo ? "Tomar " + etiqueta(P.pozo) : "";
+  $("pista-mazo").textContent = robo ? "Robar oculta" : "boca abajo";
+  $("pista-pozo").textContent = robo && P.pozo ? "Tomar " + etiqueta(P.pozo) : "boca arriba";
   $("mazo").setAttribute("aria-label", robo ? "Robar del mazo, carta oculta" : "Mazo");
   $("pozo").setAttribute("aria-label", robo && P.pozo ? "Tomar del pozo el " + nombreLargo(P.pozo) : "Pozo de descarte");
   const ultima = P.bitacora.at(-1);
@@ -476,6 +494,7 @@ function pintarJuego() {
   const cont = $("mano");
   const ancho = cont.clientWidth || 358, an = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--carta-an"));
   const paso = Math.min(an + 6, (ancho - an) / Math.max(1, mano.length - 1));
+  cont.classList.toggle("dos-filas", paso < 44);  // si la parte visible de cada carta queda < 44 px
   cont.style.setProperty("--paso", (paso - an) + "px");
   cont.innerHTML = mano.map((c, i) => `<button class="carta ${esRoja(c) ? "roja" : ""} ${sel === i ? "sel" : ""} ${P.nueva === c && miTurno ? "nueva" : ""}" data-i="${i}" aria-pressed="${sel === i}" aria-label="${nombreLargo(c)}">
       ${c === "JK" ? '<span class="indice">★</span>' : `<span class="indice">${rango(c)}<small>${PINTAS[pinta(c)]}</small></span><span class="centro">${PINTAS[pinta(c)]}</span>`}
@@ -488,10 +507,30 @@ function pintarJuego() {
   d.disabled = !(descarte && sel !== null);
   d.textContent = descarte && sel !== null ? "Descartar " + etiqueta(mano[sel]) : "Descartar";
   $("cerrar").disabled = !descarte;
+  $("cerrar").classList.toggle("listo", descarte && A.puede_cerrar);
+  $("cerrar").textContent = descarte && A.puede_cerrar ? "Cerrar ronda ✓" : "Cerrar ronda";
+  const pc = $("pista-cerrar");
+  pc.classList.toggle("lista", descarte && A.puede_cerrar);
+  pc.textContent = !descarte ? "" : A.puede_cerrar ? "¡Ya puedes cerrar la ronda!" : A.motivo_cierre ? "Aún no puedes cerrar: " + A.motivo_cierre : "";
+  avisarTurno(miTurno && !fin);
   mostrarResumen();
 }
 
 const meta = () => V.config.umbral_eliminacion || 101;
+
+/* Mejora 6: si el jugador mira otra pestaña o tiene el celular en la mesa, el turno se anuncia en el título y vibrando. */
+let avisado = false;
+function avisarTurno(toca) {
+  document.title = toca ? "¡Te toca! · Mesa de cartas" : "Mesa de cartas";
+  if (toca && !avisado && navigator.vibrate) { try { navigator.vibrate(200); } catch (e) {} }
+  avisado = toca;
+}
+
+function mostrarReglas() {
+  $("reglas-titulo").textContent = "Cómo se juega: " + TITULO[V.variante];
+  $("reglas-lista").innerHTML = (V.reglas || []).map(t => `<li>${esc(t)}</li>`).join("");
+  $("reglas").showModal();
+}
 const conectado = j => !V.conectados || V.conectados.includes(j.nombre);
 function barra(puntos) {
   const cerca = puntos >= meta() * 0.85 ? "cerca" : "";
@@ -519,6 +558,7 @@ function mostrarResumen() {
     $("res-texto").textContent = `${quien} con ${combos}.` +
       (R.bono ? ` ${yoCerre ? "Ganas" : "Gana"} un bono de ${R.bono} puntos.` :
         R.quedan.length ? ` ${yoCerre ? "Te quedaron" : "Le quedaron"} ${R.puntos_quedan} puntos sueltos, que no se ${yoCerre ? "te" : "le"} suman.` : "") +
+      (R.descarte ? ` Al cerrar se descartó sola ${yoCerre ? "tu" : "su"} carta suelta más alta, ${etiqueta(R.descarte)}.` : "") +
       (fuera.length ? ` ${mayus(enumerar(fuera))} ${fuera.length > 1 ? "llegaron" : (fuera[0] === "tú" ? "llegaste" : "llegó")} a ${meta()} y ${fuera.length > 1 ? "salen" : (fuera[0] === "tú" ? "sales" : "sale")} de la partida.` : "");
     $("res-tabla").innerHTML = `<table><thead><tr><th>Jugador</th><th class="num">Esta ronda</th><th class="num">Total</th><th style="width:35%">Hacia ${meta()}</th></tr></thead><tbody>` +
       R.filas.map(f => `<tr><td>${esc(f.jugador === V.yo ? "Tú" : f.jugador)}${f.fuera ? ' <span class="eliminado-tag">fuera</span>' : ""}</td>
@@ -585,6 +625,9 @@ $("descartar").onclick = () => {
 };
 $("seguir-aqui").onclick = () => { reemplazada = false; $("otra-pestana").hidden = true; conectar(); };
 $("cerrar").onclick = () => { sel = null; ocultarError(); enviar({ accion: "cerrar" }); };
+$("ayuda-juego").onclick = mostrarReglas;
+$("ayuda-sala").onclick = mostrarReglas;
+$("reglas-ok").onclick = () => $("reglas").close();
 $("res-salir").onclick = () => { $("resumen").close(); $("salir-sala").click(); };
 $("mover-izq").onclick = () => mover(-1);
 $("mover-der").onclick = () => mover(1);

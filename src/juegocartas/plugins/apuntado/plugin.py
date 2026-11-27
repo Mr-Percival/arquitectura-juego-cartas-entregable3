@@ -96,6 +96,15 @@ class UmbralEliminacion:
 class ReglaApuntadoPlugin:
     codigo = "APUNTADO_101"
     version_contrato = VERSION_CONTRATO
+    # Ayuda para el jugador (mejora 1 de la validación): la trae el plug-in, no el núcleo ni la pantalla.
+    reglas = (
+        "Cada jugador recibe 10 cartas. En tu turno tomas 1 carta del mazo (boca abajo) o del pozo (boca arriba) y descartas 1.",
+        "Terna: 3 cartas del mismo número, o 3 seguidas de la misma pinta (escalera).",
+        "Cierras con 3 ternas o escaleras y menos de 5 puntos sueltos. Al cerrar, tu carta suelta más alta se descarta sola.",
+        "Puntos: As, J, Q y K valen 10; del 2 al 10, su número; el comodín (★), 0.",
+        "A los demás se les suman sus puntos sueltos. Quien llega a 101 queda fuera; gana el último que quede.",
+        "Bonos para quien cierra: 10 puntos menos si cierra con todas las cartas, 25 si además son de una sola pinta.",
+    )
 
     def esquema_configuracion(self) -> Mapping[str, Any]:
         return {
