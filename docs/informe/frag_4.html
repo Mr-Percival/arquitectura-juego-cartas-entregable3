@@ -74,7 +74,14 @@
 
 <div class="fig"><p class="cap">Figura X</p><p class="tit">Componentes en el plano abstracción–inestabilidad (datos de metricas.py)</p><figure><img src="build/secuencia_principal.svg" style="width:80%"></figure></div>
 
-<p><strong>Cohesión.</strong> No medimos una métrica de cohesión como LCOM: radon no la trae y no la agregamos al script. Queda como pendiente; lo único que reportamos de forma indirecta es la CC baja (promedio 2,32) y el acoplamiento de la tabla anterior.</p>
+<p><strong>Cohesión (LCOM4).</strong> Se midió con <code>herramientas/cohesion.py</code> (reporte en <code>docs/metricas/cohesion_lcom4.md</code>): LCOM4 cuenta los grupos de métodos de instancia que no comparten atributos ni se llaman entre sí; 1 es una clase cohesiva y más de 1 sugiere partirla. De 27 clases con dos o más métodos, 19 tienen LCOM4 = 1, entre ellas todas las del núcleo con estado (<code>GameService</code> con 18 métodos, <code>TurnOrchestrator</code>, <code>MatchRecord</code>, <code>SalaService</code>, <code>PluginRegistry</code>) y los dos adaptadores de persistencia. Las 8 restantes se explican por diseño, no por descuido:</p>
+<table class="grid xs">
+<thead><tr><th>Clases</th><th class="c">LCOM4</th><th>Lectura</th></tr></thead>
+<tr><td><code>VariantePlugin</code>, <code>IRepositorioPartidas</code>, <code>IBitacora</code>, <code>IEventos</code></td><td class="c">2 a 6</td><td>Son protocolos (puertos): no tienen atributos, así que cada método queda aislado por definición. LCOM4 no aplica a interfaces.</td></tr>
+<tr><td><code>ReglaClasicaPlugin</code>, <code>ReglaApuntadoPlugin</code></td><td class="c">4</td><td>Son fábricas sin estado del microkernel: cada método entrega una estrategia distinta (regla, tabla, política, esquema). Es la forma que exige el contrato.</td></tr>
+<tr><td><code>Partida</code>, <code>DeckDealer</code></td><td class="c">2</td><td>Clases pequeñas: en <code>Partida</code>, <code>ronda_id</code> no usa el estado de la partida; en <code>DeckDealer</code>, <code>construir</code> y <code>repartir</code> no comparten estado (sin atributos). No ameritan partirse.</td></tr>
+</table>
+<p>La cohesión confirma la lectura de Deméter (4.3): <code>GameService</code> es cohesiva (LCOM4 = 1) pero grande, así que el candidato a partirse lo es por tamaño, no por mezclar responsabilidades.</p>
 
 <h2>4.3 Validación de Aislamiento Modular y Ausencia de Antipatrones</h2>
 
