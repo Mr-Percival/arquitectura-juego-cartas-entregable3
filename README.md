@@ -29,6 +29,10 @@ Arquitectura **microkernel**: un núcleo (sala, turnos, evaluación, puntuación
 
   Con la variable `DATABASE_URL=postgresql://usuario:clave@host:5432/base` usa PostgreSQL; si la base está vacía, el servidor crea el esquema al arrancar.
 
+## Videos de demostración
+
+`docs/demo/demo_clasica.mp4` y `docs/demo/demo_apuntado.mp4`: una ronda de cada modalidad en el celular. Se regeneran con `python herramientas/video_demo.py` (Playwright).
+
 ## Bitácora de auditoría
 
 Cada robo, descarte e intento de cierre (aceptado o rechazado, con el motivo) queda en la tabla `turno_jugada` con su hora. Se descarga como CSV en `/bitacora/<CÓDIGO>.csv` (por ejemplo, http://localhost:8000/bitacora/ABC123.csv). Solo trae las rondas ya cerradas, para no revelar las manos de una ronda en juego. Es la evidencia de la sección 3.2 del informe.
