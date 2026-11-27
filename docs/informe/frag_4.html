@@ -7,7 +7,7 @@
   <li><strong>arquitectura</strong>: instala el paquete, corre <code>pytest tests -v</code> (fitness functions, pruebas del MVP e integración con PostgreSQL embebido por <code>pgserver</code>) y luego <code>herramientas/metricas.py --exigir</code>, que publica el reporte de Ca, Ce, I, A, D, CC y Deméter en el resumen del run y como artefacto <code>reporte-metricas</code>. Si una regla se rompe, el paso falla y el build queda en rojo.</li>
   <li><strong>despliegue</strong>: levanta <code>docker compose up -d --build</code> y comprueba que el juego responde en <code>/salud</code>, que sirve la página y que el servidor creó el esquema en PostgreSQL.</li>
 </ul>
-<p>Las cinco ejecuciones del workflow en <code>main</code> terminaron en <em>success</em>. La última (run #5, commit <code>5b2427e</code>, 30-10-2026) duró 1 min 10 s: <em>arquitectura</em> 1 min 8 s, con 96 pruebas aprobadas en 51,70 s, y <em>despliegue</em> 26 s. Todos sus pasos salieron en verde. GitHub dejó dos advertencias (Node.js 20 obsoleto en <code>actions/checkout@v4</code>, <code>setup-python@v5</code> y <code>upload-artifact@v4</code>) y dos avisos sobre la migración de <code>ubuntu-latest</code>; ninguno afecta las reglas. En local (26-11-2026, Windows 11) la suite completa da el mismo resultado: 96 aprobadas en 75,89 s, incluida la integración con PostgreSQL, que no se saltó. La salida está en <code>docs/evidencia_pytest.txt</code>.</p>
+<p>Las ocho ejecuciones del workflow en <code>main</code> terminaron en <em>success</em>. La última (run #8, commit <code>cfd9d81</code>, 26-11-2026, ya con los ajustes de la sección 3.4) duró 1 min 9 s: <em>arquitectura</em> 1 min 6 s, con 103 pruebas aprobadas en 49,90 s, y <em>despliegue</em> 30 s. Todos sus pasos salieron en verde. GitHub dejó dos advertencias (Node.js 20 obsoleto en <code>actions/checkout@v4</code>, <code>setup-python@v5</code> y <code>upload-artifact@v4</code>) y dos avisos sobre la migración de <code>ubuntu-latest</code>; ninguno afecta las reglas. En local (26-11-2026, Windows 11) la suite completa da el mismo resultado: 103 aprobadas en 67,28 s, incluida la integración con PostgreSQL, que no se saltó. La salida está en <code>docs/evidencia_pytest.txt</code>.</p>
 
 <table class="grid small">
   <thead><tr><th>Regla</th><th>Qué verifica</th><th>Herramienta</th><th>Resultado</th></tr></thead>
@@ -22,9 +22,9 @@
     <tr><td>Métricas exigidas</td><td>Ningún plug-in con D &gt; 0,5 y ningún evaluador con CC &gt; 10.</td><td><code>metricas.py --exigir</code></td><td>Código de salida 0</td></tr>
   </tbody>
 </table>
-<p>Las 37 fitness functions corren junto con 7 pruebas de integración y 52 del MVP (unidad y aceptación de H1 a H6), para 96 en total.</p>
+<p>Las 37 fitness functions corren junto con 7 pruebas de integración y 59 del MVP (unidad, aceptación de H1 a H6, arranque sin base y ajustes de la validación), para 103 en total.</p>
 
-<div class="fig"><p class="cap">Figura X</p><p class="tit">Última ejecución del workflow fitness-functions en main (GitHub Actions, run #5)</p><figure><img src="build/ci_actions.png" style="width:100%"></figure></div>
+<div class="fig"><p class="cap">Figura X</p><p class="tit">Última ejecución del workflow fitness-functions en main (GitHub Actions, run #8)</p><figure><img src="build/ci_actions.png" style="width:100%"></figure></div>
 
 <h2>4.2 Reporte de Métricas de Código (Complejidad Ciclomática, Cohesión, Acoplamiento)</h2>
 
