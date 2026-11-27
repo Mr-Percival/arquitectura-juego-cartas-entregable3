@@ -37,8 +37,18 @@ def armar_gateway(repositorio: IRepositorioPartidas | None = None) -> GameGatewa
 
 
 def repositorio_del_entorno() -> IRepositorioPartidas:
+    """PostgreSQL si hay DATABASE_URL y responde; si la base no está disponible, el juego arranca en memoria.
+
+    Plan de reversa del Release Checklist: una base caída o vencida no debe tumbar el juego.
+    """
     url = os.environ.get("DATABASE_URL")
-    return PostgresRepositoryAdapter.desde_url(url) if url else RepositorioEnMemoria()
+    if not url:
+        return RepositorioEnMemoria()
+    try:
+        return PostgresRepositoryAdapter.desde_url(url)
+    except Exception:
+        logging.getLogger(__name__).exception("PostgreSQL no disponible: el juego arranca con el repositorio en memoria")
+        return RepositorioEnMemoria()
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
