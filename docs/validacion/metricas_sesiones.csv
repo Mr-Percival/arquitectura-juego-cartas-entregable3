@@ -1,0 +1,7 @@
+evaluador,modalidad,sala,jugadores,rondas_jugadas,turnos_totales,turnos_evaluador,ganador,terminada,cierres_validos,cierres_rechazados,mensajes_rechazo,pensar_prom_s,latencia_turno_prom_ms,tiempo_turno_prom_s,tiempo_turno_p95_s,rtt_eval_prom_ms,rtt_eval_p95_ms,rtt_todos_prom_ms,rtt_todos_p95_ms,comandos_evaluador,duracion_real_s,bitacora_csv,bitacora_filas
+U01,clasica,DSCAB2,Nicolas / U01,1,17,8,Nicolas,True,1,1,No puedes cerrar todavía. Te falta 1 cuarta. Tienes 3 ternas; para cerrar se necesita 1 cuarta + 2 ternas + 1 carta para descartar.,11.453,9.705,11.463,15.405,4.337,6.86,3.219,6.68,18,0.729,U01_clasica_DSCAB2.csv,35
+U02,apuntado,3L7QAM,Catalina / U02,10,105,52,U02,True,10,1,No puedes cerrar todavía. Tienes 1 de las 3 ternas o escaleras que se necesitan para cerrar.,12.99,8.858,12.999,19.133,4.349,7.837,3.617,7.264,106,4.364,U02_apuntado_3L7QAM.csv,211
+U03,clasica,MTFFTN,Elizabeth / U03,1,7,3,Elizabeth,True,1,0,,11.273,7.663,11.281,16.27,3.331,4.524,3.009,7.579,7,0.271,U03_clasica_MTFFTN.csv,14
+U03,apuntado,524DJ7,Elizabeth / U03,8,87,44,U03,True,8,0,,12.703,8.736,12.711,19.331,4.323,7.386,3.586,7.186,89,3.651,U03_apuntado_524DJ7.csv,174
+U04,clasica,K6C5K2,Nicolas / Catalina / U04,1,12,4,U04,True,1,0,,12.12,9.432,12.13,14.915,4.247,8.342,2.88,5.28,9,0.413,U04_clasica_K6C5K2.csv,24
+U05,apuntado,RNFRVY,Catalina / Elizabeth / U05,8,130,33,Catalina,True,8,0,,12.615,10.871,12.626,19.549,5.361,9.131,3.778,6.629,67,5.25,U05_apuntado_RNFRVY.csv,260

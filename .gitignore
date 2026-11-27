@@ -9,3 +9,12 @@ docs/informe/build/_raw.pdf
 docs/informe/Entregable2.html
 docs/informe/Entregable2.pdf
 docs/informe/build/_build.html
+docs/informe/Entregable3.html
+docs/informe/Entregable3.pdf
+docs/informe/cuerpo.html
+docs/informe/build/_estilo.css.txt
+docs/validacion/resumen_tecnico.md
+docs/validacion/metricas_sesiones.json
+docs/validacion/servidor.log
+herramientas/sesiones_validacion.py
+herramientas/capturas_validacion.py

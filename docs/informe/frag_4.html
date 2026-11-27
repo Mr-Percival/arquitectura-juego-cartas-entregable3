@@ -1,0 +1,94 @@
+<h1>4. Verificación de Gobernanza Arquitectónica y Calidad</h1>
+
+<h2>4.1 Integración de Fitness Functions en Pipeline CI/CD</h2>
+
+<p>El pipeline está en <code>.github/workflows/fitness-functions.yml</code> y corre en GitHub Actions con cada <em>push</em> y cada <em>pull request</em>, sobre <code>ubuntu-latest</code> con Python 3.12. Tiene dos jobs:</p>
+<ul>
+  <li><strong>arquitectura</strong>: instala el paquete, corre <code>pytest tests -v</code> (fitness functions, pruebas del MVP e integración con PostgreSQL embebido por <code>pgserver</code>) y luego <code>herramientas/metricas.py --exigir</code>, que publica el reporte de Ca, Ce, I, A, D, CC y Deméter en el resumen del run y como artefacto <code>reporte-metricas</code>. Si una regla se rompe, el paso falla y el build queda en rojo.</li>
+  <li><strong>despliegue</strong>: levanta <code>docker compose up -d --build</code> y comprueba que el juego responde en <code>/salud</code>, que sirve la página y que el servidor creó el esquema en PostgreSQL.</li>
+</ul>
+<p>Las cinco ejecuciones del workflow en <code>main</code> terminaron en <em>success</em>. La última (run #5, commit <code>5b2427e</code>, 30-10-2026) duró 1 min 10 s: <em>arquitectura</em> 1 min 8 s, con 96 pruebas aprobadas en 51,70 s, y <em>despliegue</em> 26 s. Todos sus pasos salieron en verde. GitHub dejó dos advertencias (Node.js 20 obsoleto en <code>actions/checkout@v4</code>, <code>setup-python@v5</code> y <code>upload-artifact@v4</code>) y dos avisos sobre la migración de <code>ubuntu-latest</code>; ninguno afecta las reglas. En local (26-11-2026, Windows 11) la suite completa da el mismo resultado: 96 aprobadas en 75,89 s, incluida la integración con PostgreSQL, que no se saltó. La salida está en <code>docs/evidencia_pytest.txt</code>.</p>
+
+<table class="grid small">
+  <thead><tr><th>Regla</th><th>Qué verifica</th><th>Herramienta</th><th>Resultado</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Prueba 1</strong> · R2/R3 Independencia de reglas</td><td>Aislamiento de los plug-ins sin acoplamiento cruzado: Clásica no importa Apuntado ni al revés, un plug-in solo importa <code>nucleo.contrato</code> y el núcleo no conoce plug-ins concretos (los descubre por <em>entry points</em>). Una prueba extra comprueba que la regla sí detecta un import entre plug-ins.</td><td>PyTestArch</td><td>6/6 aprobadas</td></tr>
+    <tr><td><strong>Prueba 2</strong> · R1 Aislamiento de capas</td><td>UI aislada del almacenamiento: <code>presentacion</code> no importa <code>persistencia</code>, el núcleo no depende de persistencia ni de presentación, ningún módulo interno importa el adaptador de PostgreSQL y solo <code>persistencia</code> importa el driver de base de datos.</td><td>PyTestArch</td><td>6/6 aprobadas</td></tr>
+    <tr><td><strong>Prueba 3</strong> · R4 Sin ciclos</td><td>El grafo de dependencias entre los 13 componentes es acíclico (búsqueda en profundidad sobre los imports). Una segunda prueba confirma que el detector encuentra un ciclo a→b→c→a.</td><td>ast + DFS propio</td><td>2/2 aprobadas</td></tr>
+    <tr><td>R5 Complejidad ciclomática</td><td>Evaluadores de combinaciones (kit del contrato, evaluación y plug-ins) con CC ≤ 10; resto del código CC ≤ 15.</td><td>radon</td><td>10/10 aprobadas</td></tr>
+    <tr><td>R7 Contrato de plug-ins</td><td>Se descubren las dos variantes, cada una cumple el contrato, una variante nueva se registra sin tocar el núcleo y se rechaza un plug-in de otra versión mayor del contrato.</td><td>pytest</td><td>7/7 aprobadas</td></tr>
+    <tr><td>R8 Rendimiento</td><td>p95 de la evaluación de cierre &lt; 50 ms sobre 10 000 manos de 11 cartas con comodines.</td><td>pytest + <code>perf_counter</code></td><td>2/2 (p95 local: Clásica 4,70 ms; Apuntado 8,08 ms)</td></tr>
+    <tr><td>R9 Orquestación del cierre</td><td>Se publica el evento solo después de persistir, no se publica si la persistencia falla, de dos cierres simultáneos solo uno persiste y se rechaza al jugador fuera de turno.</td><td>pytest</td><td>4/4 aprobadas</td></tr>
+    <tr><td>Métricas exigidas</td><td>Ningún plug-in con D &gt; 0,5 y ningún evaluador con CC &gt; 10.</td><td><code>metricas.py --exigir</code></td><td>Código de salida 0</td></tr>
+  </tbody>
+</table>
+<p>Las 37 fitness functions corren junto con 7 pruebas de integración y 52 del MVP (unidad y aceptación de H1 a H6), para 96 en total.</p>
+
+<div class="fig"><p class="cap">Figura X</p><p class="tit">Última ejecución del workflow fitness-functions en main (GitHub Actions, run #5)</p><figure><img src="build/ci_actions.png" style="width:100%"></figure></div>
+
+<h2>4.2 Reporte de Métricas de Código (Complejidad Ciclomática, Cohesión, Acoplamiento)</h2>
+
+<p>Las métricas salen de <code>herramientas/metricas.py</code>: la CC se mide con radon y Ca, Ce, I, A y D se calculan sobre los imports entre componentes (A = clases abstractas, es decir <code>Protocol</code>, <code>ABC</code> o con <code>@abstractmethod</code>, sobre el total de clases). El reporte completo está en <code>docs/metricas/reporte_metricas.md</code>; la corrida del 26-11 dio exactamente lo mismo que la del CI.</p>
+
+<p><strong>Complejidad ciclomática.</strong> En todo el código hay 241 bloques, con CC promedio 2,32 y máximo 10. Los bloques de evaluación de ternas, cuartas y cierres son 42, con promedio 3,24 y máximo 10: 31 quedan por debajo de 5 y 11 entre 5 y 10; ninguno pasa el umbral. El ordenamiento de cartas está dentro de <code>es_escalera</code> (ordena las cartas naturales por rango antes de revisar huecos y comodines).</p>
+
+<table class="grid xs">
+  <thead><tr><th>Archivo</th><th>Bloque</th><th>CC</th><th>Frente al umbral</th></tr></thead>
+  <tbody>
+    <tr><td>plugins/clasica/plugin.py</td><td><code>CierreClasico433._que_falta</code></td><td>10</td><td>En el límite (≤ 10), no deseable</td></tr>
+    <tr><td>nucleo/contrato/combinaciones.py</td><td><code>es_escalera</code> (incluye el ordenamiento)</td><td>9</td><td>Dentro, no deseable</td></tr>
+    <tr><td>nucleo/contrato/combinaciones.py</td><td><code>particiones</code></td><td>8</td><td>Dentro, no deseable</td></tr>
+    <tr><td>plugins/apuntado/plugin.py</td><td><code>UmbralEliminacion.evaluar</code></td><td>8</td><td>Dentro, no deseable</td></tr>
+    <tr><td>nucleo/contrato/combinaciones.py</td><td><code>mejor_cobertura</code></td><td>7</td><td>Dentro, no deseable</td></tr>
+    <tr><td>plugins/apuntado/plugin.py</td><td><code>UmbralEliminacion._desempatar</code></td><td>6</td><td>Dentro, no deseable</td></tr>
+    <tr><td>plugins/apuntado/plugin.py</td><td><code>CierreApuntado._tocar</code></td><td>6</td><td>Dentro, no deseable</td></tr>
+    <tr><td>nucleo/contrato/combinaciones.py</td><td><code>es_grupo</code></td><td>6</td><td>Dentro, no deseable</td></tr>
+    <tr><td colspan="2">Los otros 34 bloques de evaluación</td><td>≤ 5</td><td>31 de ellos &lt; 5 (deseable)</td></tr>
+  </tbody>
+</table>
+<p><code>_que_falta</code> llega a 10 porque arma el mensaje de qué le falta al jugador (cuartas, ternas o descarte) con una rama por caso. Está en el límite; si crece, el paso natural es sacar cada caso a una función. Fuera de la evaluación, los bloques más altos son <code>LiquidadorRonda.liquidar</code> (9) y <code>GameService.vista</code> y <code>GameService._analizar</code> (8).</p>
+
+<p><strong>Acoplamiento y distancia a la secuencia principal.</strong></p>
+<table class="grid xs">
+  <thead><tr><th>Componente</th><th>Tipo</th><th>Ca</th><th>Ce</th><th>I</th><th>A</th><th>D</th><th>Zona</th></tr></thead>
+  <tbody>
+    <tr><td>nucleo.contrato</td><td>Núcleo</td><td>8</td><td>0</td><td>0,00</td><td>0,36</td><td>0,64</td><td>Dolor</td></tr>
+    <tr><td>nucleo.soporte</td><td>Núcleo</td><td>6</td><td>0</td><td>0,00</td><td>0,14</td><td>0,86</td><td>Dolor</td></tr>
+    <tr><td>nucleo.sala</td><td>Núcleo</td><td>3</td><td>1</td><td>0,25</td><td>0,29</td><td>0,46</td><td>Dolor</td></tr>
+    <tr><td>nucleo.registro</td><td>Núcleo</td><td>1</td><td>1</td><td>0,50</td><td>0,00</td><td>0,50</td><td>Dolor</td></tr>
+    <tr><td>nucleo.turno</td><td>Núcleo</td><td>3</td><td>2</td><td>0,40</td><td>0,33</td><td>0,27</td><td>Cerca</td></tr>
+    <tr><td>nucleo.partida</td><td>Núcleo</td><td>2</td><td>5</td><td>0,71</td><td>0,50</td><td>0,21</td><td>Cerca</td></tr>
+    <tr><td>nucleo.puntuacion</td><td>Núcleo</td><td>2</td><td>2</td><td>0,50</td><td>0,33</td><td>0,17</td><td>Cerca</td></tr>
+    <tr><td>nucleo.evaluacion</td><td>Núcleo</td><td>1</td><td>1</td><td>0,50</td><td>0,50</td><td>0,00</td><td>Cerca</td></tr>
+    <tr><td>plugins.clasica</td><td>Reglas</td><td>0</td><td>1</td><td>1,00</td><td>0,00</td><td>0,00</td><td>Cerca</td></tr>
+    <tr><td>plugins.apuntado</td><td>Reglas</td><td>0</td><td>1</td><td>1,00</td><td>0,00</td><td>0,00</td><td>Cerca</td></tr>
+    <tr><td>presentacion</td><td>Adaptador</td><td>1</td><td>4</td><td>0,80</td><td>0,33</td><td>0,13</td><td>Cerca</td></tr>
+    <tr><td>persistencia</td><td>Adaptador</td><td>1</td><td>1</td><td>0,50</td><td>0,00</td><td>0,50</td><td>Dolor</td></tr>
+    <tr><td>arranque</td><td>Composición</td><td>0</td><td>9</td><td>1,00</td><td>0,00</td><td>0,00</td><td>Cerca</td></tr>
+  </tbody>
+</table>
+<p class="small">I = Ce / (Ca + Ce); D = |A + I − 1|. El script marca "cerca" si D ≤ 0,3 y, si no, zona del dolor cuando A + I &lt; 1.</p>
+
+<p>Los dos plug-ins de reglas tienen Ce = 1 (solo dependen del contrato) y Ca = 0 (nadie los importa: el registro los carga por <em>entry points</em>). Son totalmente inestables y concretos, así que caen sobre la secuencia principal (D = 0), que es lo que se busca en un microkernel: lo que cambia por variante es fácil de cambiar y no arrastra a nadie. Ningún componente cae en la zona de inutilidad.</p>
+<p>La zona del dolor la ocupan sobre todo piezas del núcleo. <code>nucleo.contrato</code> (D = 0,64) y <code>nucleo.soporte</code> (D = 0,86) son las más estables (Ca = 8 y 6, Ce = 0) y casi todo lo que tienen son objetos de valor como <code>Carta</code>, <code>Combinacion</code> y <code>CierreRonda</code>, que son concretos a propósito. El riesgo de la zona del dolor es que cambiar algo ahí obliga a tocar a muchos; en el contrato eso está controlado con la versión mayor que valida R7, y los objetos de valor cambian poco. <code>nucleo.registro</code> y <code>persistencia</code> (D = 0,50) son concretos con una sola dependencia cada uno; <code>nucleo.sala</code> (0,46) es el único que se acerca a algo que valga la pena revisar, porque tiene tres dependientes y pocas abstracciones.</p>
+
+<div class="fig"><p class="cap">Figura X</p><p class="tit">Componentes en el plano abstracción–inestabilidad (datos de metricas.py)</p><figure><img src="build/secuencia_principal.svg" style="width:80%"></figure></div>
+
+<p><strong>Cohesión.</strong> No medimos una métrica de cohesión como LCOM: radon no la trae y no la agregamos al script. Queda como pendiente; lo único que reportamos de forma indirecta es la CC baja (promedio 2,32) y el acoplamiento de la tabla anterior.</p>
+
+<h2>4.3 Validación de Aislamiento Modular y Ausencia de Antipatrones</h2>
+
+<p><strong>Aislamiento y ciclos.</strong> Las pruebas 1 a 3 de la sección 4.1 pasan en todas las ejecuciones. El grafo de dependencias que reporta <code>metricas.py</code> lo confirma a mano: los plug-ins solo apuntan a <code>nucleo.contrato</code>, <code>presentacion</code> depende de <code>nucleo.partida</code>, <code>nucleo.sala</code>, <code>nucleo.soporte</code> y <code>nucleo.turno</code> pero nunca de <code>persistencia</code>, y <code>persistencia</code> solo depende de <code>nucleo.soporte</code>. Solo <code>arranque</code> conoce 9 de los 12 componentes (Ce = 9), porque es la raíz de composición donde se conectan los adaptadores. No hay ciclos.</p>
+
+<p><strong>Ley de Deméter.</strong> El script busca llamadas encadenadas sobre objetos ajenos y encontró 11 en 10 líneas, todas en el núcleo:</p>
+<table class="grid xs">
+  <thead><tr><th>Patrón</th><th>Dónde</th><th>Casos</th><th>¿Aceptable?</th></tr></thead>
+  <tbody>
+    <tr><td><code>self._registro.resolver(variante).regla_cierre</code> / <code>.tabla_puntos</code> / <code>.politica_fin(config).evaluar</code> / <code>.esquema_configuracion</code></td><td>evaluador.py:23, liquidador.py:25, 38 (×2), 78, configuracion.py:23, servicio.py:162, 228</td><td>8</td><td>Sí. Es el uso normal del microkernel: el núcleo le pide al registro el plug-in de la variante y luego le habla a ese plug-in a través del contrato. Esconderlo detrás de métodos del registro solo movería la cadena.</td></tr>
+    <tr><td><code>self._salas.obtener(codigo_sala).codigo</code></td><td>servicio.py:124, 178, 239</td><td>3</td><td>No del todo. Se usa para normalizar el código de sala que escribió el usuario. Se puede quitar con un método del repositorio de salas que devuelva el código normalizado; queda como mejora.</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Excepciones tragadas.</strong> Revisamos todos los <code>except</code> de <code>src/</code>. Los tres <code>except Exception</code> están en <code>GameService</code>: al empezar la partida (registra el error, reabre la sala y relanza como <code>ErrorSala</code>), al cerrar (relanza como <code>ErrorSala</code>; por ADR-05 la transacción no dejó nada a medias y el jugador sigue en su turno) y al anotar una jugada en la bitácora. Este último es el único que no relanza: deja el error en el log y la partida sigue. Es una decisión, porque la jugada ya ocurrió y la bitácora es de auditoría, pero significa que una falla de la base puede dejar huecos en la bitácora sin que el jugador se entere. Los demás <code>except</code> capturan tipos concretos y los traducen a errores del dominio o a respuestas HTTP 404.</p>
+
+<p><strong>Otros puntos.</strong> <code>GameService</code> (264 líneas, 27 métodos) es la clase más grande y concentra 5 de las 11 cadenas de Deméter; por ahora no pasa de los umbrales de CC, pero es la candidata a partirse si el MVP crece. No hay imports entre plug-ins, el núcleo no importa adaptadores y el driver de base de datos solo aparece en <code>persistencia</code>, todo verificado por las fitness functions y no solo por revisión.</p>

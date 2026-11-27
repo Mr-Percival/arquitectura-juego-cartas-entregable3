@@ -1,0 +1,46 @@
+<div class="section">
+<h2>3.2 Registro de Pruebas y Evidencias (Logs, Grabaciones y Métricas)</h2>
+<p>Cada sesión dejó tres tipos de evidencia: la bitácora de auditoría que genera el propio sistema (H6), descargada como CSV al terminar la partida; las métricas de tiempos y latencia; y capturas de pantalla de la partida en curso. Todo está en <span class="mono">docs/validacion/</span> del repositorio.</p>
+<table class="grid xs">
+<thead><tr><th>Evaluador</th><th>Modalidad</th><th>Mesa</th><th>Sala</th><th class="c">Rondas</th><th class="c">Turnos (del evaluador)</th><th>Bitácora</th><th class="c">Filas</th></tr></thead>
+<tr><td>U01</td><td>Clásica</td><td>U01, Nicolas</td><td class="mono">DSCAB2</td><td class="c">1</td><td class="c">17 (8)</td><td class="mono">U01_clasica_DSCAB2.csv</td><td class="c">35</td></tr>
+<tr><td>U02</td><td>Apuntado</td><td>U02, Catalina</td><td class="mono">3L7QAM</td><td class="c">10</td><td class="c">105 (52)</td><td class="mono">U02_apuntado_3L7QAM.csv</td><td class="c">211</td></tr>
+<tr><td>U03</td><td>Clásica</td><td>U03, Elizabeth</td><td class="mono">MTFFTN</td><td class="c">1</td><td class="c">7 (3)</td><td class="mono">U03_clasica_MTFFTN.csv</td><td class="c">14</td></tr>
+<tr><td>U03</td><td>Apuntado</td><td>U03, Elizabeth</td><td class="mono">524DJ7</td><td class="c">8</td><td class="c">87 (44)</td><td class="mono">U03_apuntado_524DJ7.csv</td><td class="c">174</td></tr>
+<tr><td>U04</td><td>Clásica</td><td>U04, Nicolas, Catalina</td><td class="mono">K6C5K2</td><td class="c">1</td><td class="c">12 (4)</td><td class="mono">U04_clasica_K6C5K2.csv</td><td class="c">24</td></tr>
+<tr><td>U05</td><td>Apuntado</td><td>U05, Catalina, Elizabeth</td><td class="mono">RNFRVY</td><td class="c">8</td><td class="c">130 (33)</td><td class="mono">U05_apuntado_RNFRVY.csv</td><td class="c">260</td></tr>
+</table>
+<p>La bitácora registra fecha y hora (UTC), partida, ronda, turno, jugador, acción (<span class="mono">ROBAR_MAZO</span>, <span class="mono">ROBAR_DESCARTE</span>, <span class="mono">DESCARTAR</span>, <span class="mono">SOLICITAR_CIERRE</span>), carta, resultado y motivo. Los cierres rechazados quedan con su motivo textual, que es el mismo que vio el jugador:</p>
+<pre>ocurrida_en,partida,ronda,turno,jugador,accion,carta,resultado,motivo
+…,1,1,4,U01,SOLICITAR_CIERRE,,RECHAZADA,Te falta 1 cuarta. Tienes 3 ternas; para cerrar se necesita
+                                          1 cuarta + 2 ternas + 1 carta para descartar.
+…,1,1,17,Nicolas,SOLICITAR_CIERRE,,ACEPTADA,</pre>
+<p><b>Marcador de Apuntado.</b> Las tres partidas de Apuntado llegaron a la declaración de fin por 101, que era la tarea 4 del guion: en la de U02 Catalina salió con 110 en la ronda 10; en la de U03 Elizabeth salió con 166 en la ronda 8; en la de tres jugadores, U05 salió con 116 en la ronda 6 y la partida siguió entre Catalina y Elizabeth hasta que Elizabeth llegó a 108 en la ronda 8. En ningún caso el sistema dejó seguir a un jugador eliminado ni declaró el fin antes de tiempo.</p>
+<p><b>Latencia.</b> Se midió el tiempo de ida y vuelta entre que el cliente envía una orden por WebSocket y recibe la confirmación del servidor. Promedio de 3,3 a 5,4 ms y p95 de 4,5 a 9,1 ms por sesión; el turno completo (robar y descartar) sumó de 7,7 a 10,9 ms de comunicación. El rechazo de un cierre llegó en 5 a 6 ms. Las sesiones se hicieron en red local con el servidor en un portátil, así que estas cifras son el piso del sistema; en Render se suma la latencia de internet.</p>
+<div class="fig"><p class="cap">Figura X</p><p class="tit">Capturas de las sesiones en celular: sala de espera, mesa con la mano, rechazo de un cierre con su motivo y resumen de ronda en Apuntado</p>
+<figure><table style="width:100%;border:none"><tr>
+<td style="border:none;text-align:center"><img src="build/cap_01_sala_espera.png" style="width:100%"></td>
+<td style="border:none;text-align:center"><img src="build/cap_02_mesa_con_mano.png" style="width:100%"></td>
+<td style="border:none;text-align:center"><img src="build/cap_03_rechazo_cierre.png" style="width:100%"></td>
+<td style="border:none;text-align:center"><img src="build/cap_04_resumen_ronda_apuntado.png" style="width:100%"></td>
+</tr></table></figure></div>
+
+<h2>3.3 Análisis de Resultados (Efectividad, Errores y Usabilidad)</h2>
+<table class="grid xs">
+<thead><tr><th>ID</th><th>Modalidad probada</th><th class="c">¿Logró cerrar ronda válida?</th><th style="width:34%">Errores / confusiones detectadas</th><th class="c">Tiempo prom. por turno</th><th class="c">SUS</th><th class="c">Satisfacción (1-5)</th></tr></thead>
+<tr><td>U01</td><td>Clásica (4-3-3)</td><td class="c">No (cerró primero el rival)</td><td>Intentó cerrar con 3 ternas y sin cuarta; entendió el rechazo, pero esperaba que el botón «Cerrar» le avisara antes.</td><td class="c">11,5 s</td><td class="c">72,5</td><td class="c">4,0</td></tr>
+<tr><td>U02</td><td>Apuntado (101)</td><td class="c">Sí (4 de 10 rondas)</td><td>Intentó cerrar con una sola terna para «ver qué pasaba». No sabía que, al cerrar, se descarta solo la carta suelta más alta.</td><td class="c">13,0 s</td><td class="c">85,0</td><td class="c">4,5</td></tr>
+<tr><td>U03</td><td>Ambas</td><td class="c">Sí (Apuntado)</td><td>En el primer turno no distinguió el pozo del mazo. Buscó un botón de reglas que no existe.</td><td class="c">11,3 s / 12,7 s</td><td class="c">77,5</td><td class="c">4,0</td></tr>
+<tr><td>U04</td><td>Clásica, 3 jugadores</td><td class="c">Sí</td><td>Pidió cartas más grandes; con la mano llena en su celular las cartas se solapan. No veía cuánto le faltaba al rival para jugar.</td><td class="c">12,1 s</td><td class="c">70,0</td><td class="c">3,5</td></tr>
+<tr><td>U05</td><td>Apuntado, 3 jugadores</td><td class="c">Sí (2 rondas)</td><td>No conocía el Apuntado: entendió la acumulación hasta 101 solo al ver el primer resumen de ronda. Pidió las reglas al empezar.</td><td class="c">12,6 s</td><td class="c">80,0</td><td class="c">4,5</td></tr>
+</table>
+<table class="grid xs">
+<thead><tr><th>Métrica</th><th>Resultado</th><th>Meta</th><th class="c">¿Cumple?</th></tr></thead>
+<tr><td>Tasa de éxito en cierre</td><td>4 de 5 evaluadores (80 %) cerraron al menos una ronda válida; U01 jugó una sola ronda de Clásica y la cerró primero el rival.</td><td>≥ 80 %</td><td class="c">Sí</td></tr>
+<tr><td>Errores de regla percibidos</td><td>2 cierres rechazados quedaron en la bitácora (U01 y U02, que hicieron la tarea 3 completa); U03, U04 y U05 no alcanzaron a intentar el cierre inválido antes de que la ronda terminara. Los dos rechazos se entendieron por el mensaje. 0 errores del motor: ningún cierre válido se rechazó ni uno inválido se aceptó.</td><td>Registrar</td><td class="c">—</td></tr>
+<tr><td>Tiempo por turno</td><td>Promedio de 11,3 a 13,0 s; p95 de 14,9 a 19,5 s.</td><td>≤ 20 s</td><td class="c">Sí</td></tr>
+<tr><td>Latencia</td><td>p95 ≤ 9,1 ms por orden; los cinco dijeron que el descarte del rival «aparece al instante».</td><td>p95 &lt; 300 ms</td><td class="c">Sí</td></tr>
+<tr><td>Satisfacción</td><td>SUS promedio 77,0 (de 70,0 a 85,0); calificación general 4,1 de 5.</td><td>SUS ≥ 68</td><td class="c">Sí</td></tr>
+</table>
+<p><b>Lectura.</b> La parte que más pesa en la arquitectura salió bien: el motor validó todas las combinaciones y los mensajes de rechazo, que arma cada plug-in porque es el que conoce su regla (ADR-03), bastaron para que los evaluadores entendieran qué faltaba sin preguntar. Lo que falló fue la claridad antes de jugar: tres de cinco (U03, U04, U05) pidieron las reglas, y dos (U01, U02) habrían preferido saber que no podían cerrar antes de intentarlo. Los SUS más bajos (U04, U01) coinciden con los problemas de pantalla y de anticipación, no con errores del sistema. Las confusiones coinciden con lo que ya había señalado la evaluación heurística (ayuda y prevención de errores), lo que confirma esos dos puntos como prioritarios.</p>
+</div>

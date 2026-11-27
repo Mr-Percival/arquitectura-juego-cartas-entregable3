@@ -1,0 +1,206 @@
+@startuml clases_implementacion
+' Clases de implementación del MVP (núcleo, contrato, plug-ins y persistencia) - Entregable 3
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam nodesep 25
+skinparam ranksep 35
+skinparam class {
+  BorderColor #2F4A6D
+  BackgroundColor #F7F9FC
+  ArrowColor #2F4A6D
+}
+skinparam package {
+  BorderColor #8A9BB3
+}
+hide empty members
+
+package "nucleo.contrato (SPI de los plug-ins)" as contrato {
+  interface VariantePlugin <<Protocol>> {
+    + codigo : str
+    + version_contrato : str
+    + esquema_configuracion() : Mapping[str, Any]
+    + regla_cierre(config) : ReglaCierre
+    + tabla_puntos(config) : TablaPuntos
+    + politica_fin(config) : PoliticaFinPartida
+  }
+  interface ReglaCierre <<Protocol>> {
+    + evaluar(mano : Sequence[Carta]) : EvaluacionCierre
+  }
+  interface TablaPuntos <<Protocol>> {
+    + puntos(carta : Carta) : int
+  }
+  interface PoliticaFinPartida <<Protocol>> {
+    + evaluar(marcador : Marcador) : DecisionFin
+  }
+  class EvaluacionCierre <<dataclass frozen>> {
+    + valida : bool
+    + tipo : str | None
+    + combinaciones : tuple[Combinacion, ...]
+    + sobrantes : tuple[Carta, ...]
+    + motivo_rechazo : str
+  }
+  class Marcador <<dataclass>> {
+    + saldos : dict[str, int]
+    + eliminados : set[str]
+    + aplicar(deltas : dict[str, int]) : None
+  }
+  class "combinaciones" as comb <<module>> {
+    + {static} es_grupo(cartas) : bool
+    + {static} es_escalera(cartas) : bool
+    + {static} clasificar(cartas) : Combinacion | None
+    + {static} particiones(mano, tamanos) : Iterator[tuple[list[Combinacion], list[Carta]]]
+    + {static} mejor_cobertura(mano, costo) : tuple[list[Combinacion], list[Carta]]
+    + {static} cartas_sueltas(mano, puntos) : tuple[list[Combinacion], list[Carta]]
+  }
+}
+
+package "nucleo (microkernel)" as nucleo {
+  class PluginRegistry {
+    - _plugins : dict[str, VariantePlugin]
+    + registrar(plugin : VariantePlugin) : None
+    + descubrir(fuentes : Iterable | None) : list[str]
+    + resolver(codigo : str) : VariantePlugin
+    + codigos() : list[str]
+  }
+  class HandEvaluator {
+    - _registro : IResolverVariante
+    + evaluar_cierre(variante : str, config, mano) : EvaluacionCierre
+  }
+  class TurnOrchestrator {
+    - _evaluador : IEvaluarMano
+    - _liquidador : ILiquidarRonda
+    - _registro : IRegistrarRonda
+    - _eventos : IPublicarEvento
+    - _partidas : dict[str, EstadoTurno]
+    + iniciar(partida_id, variante, config, primero, orden) : None
+    + robar(partida_id, jugador, accion) : Any
+    + descartar(partida_id, jugador, accion) : str
+    + solicitar_cierre(partida_id, jugador, mano) : EvaluacionCierre
+    - {static} _exigir(estado, jugador, fase) : None
+  }
+  class LiquidadorRonda {
+    - _registro : IResolverVariante
+    - _rondas : IConsultarRonda
+    - _contador : RoundScoring
+    - _posiciones : MatchStandings
+    + liquidar(partida_id, quien_cierra, evaluacion) : CierreRonda
+  }
+  class RoundScoring {
+    + penalizaciones(variante, config, sobrantes) : dict[str, int]
+  }
+  class MatchStandings {
+    + actualizar(variante, config, marcador, deltas) : DecisionFin
+  }
+  class GameService {
+    - _orquestador : TurnOrchestrator
+    - _partidas : PartidasEnCurso
+    + cerrar(codigo_sala : str, jugador : str) : None
+    - _al_liquidar(evento : EventoPartida) : None
+  }
+  class MatchRecord {
+    - _repo : IRepositorioPartidas
+    + registrar_ronda(cierre : CierreRonda) : None
+    + anotar_jugada(jugada : Jugada) : None
+  }
+  interface IRepositorioPartidas <<Protocol>> {
+    + liquidar_ronda(cierre : CierreRonda) : None
+    + abrir_partida(...) : None
+    + abrir_ronda(...) : None
+    + anotar_jugada(jugada : Jugada) : None
+    + bitacora(sala : str) : list[dict]
+  }
+  class CierreRonda <<dataclass frozen>> {
+    + ronda_id : str
+    + jugador_cierra : str
+    + penalizaciones : dict[str, int]
+    + eliminados : tuple[str, ...]
+    + partida_terminada : bool
+    + ganador : str | None
+  }
+}
+
+package "plugins.clasica" as pc {
+  class ReglaClasicaPlugin {
+    + codigo = "CLASICA_433"
+  }
+  class CierreClasico433 {
+    + evaluar(mano) : EvaluacionCierre
+    - {static} _que_falta(mano) : str
+  }
+  class SinPenalizacion
+  class FinEnUnaRonda
+}
+
+package "plugins.apuntado" as pa {
+  class ReglaApuntadoPlugin {
+    + codigo = "APUNTADO_101"
+  }
+  class CierreApuntado {
+    - _umbral : int
+    - _tabla : TablaPuntosEstandar
+    + evaluar(mano) : EvaluacionCierre
+    - _completo(mano) : EvaluacionCierre | None
+    - _tocar(mano) : EvaluacionCierre
+  }
+  class TablaPuntosEstandar
+  class UmbralEliminacion {
+    - _umbral : int
+    + evaluar(marcador) : DecisionFin
+  }
+}
+
+package "persistencia (adaptadores)" as pers {
+  class PostgresRepositoryAdapter {
+    - _cx : psycopg.Connection
+    + {static} desde_url(url : str) : PostgresRepositoryAdapter
+    + liquidar_ronda(c : CierreRonda) : None
+  }
+  class RepositorioEnMemoria
+}
+
+GameService --> TurnOrchestrator
+TurnOrchestrator --> HandEvaluator : IEvaluarMano
+TurnOrchestrator --> LiquidadorRonda : ILiquidarRonda
+TurnOrchestrator --> MatchRecord : IRegistrarRonda
+HandEvaluator --> PluginRegistry : IResolverVariante
+LiquidadorRonda *-- RoundScoring
+LiquidadorRonda *-- MatchStandings
+LiquidadorRonda ..> comb : cartas_sueltas()
+LiquidadorRonda ..> CierreRonda : <<create>>
+PluginRegistry o-- "0..*" VariantePlugin
+MatchRecord --> IRepositorioPartidas
+
+VariantePlugin ..> ReglaCierre
+VariantePlugin ..> TablaPuntos
+VariantePlugin ..> PoliticaFinPartida
+ReglaCierre ..> EvaluacionCierre
+PoliticaFinPartida ..> Marcador
+
+ReglaClasicaPlugin ..|> VariantePlugin
+CierreClasico433 ..|> ReglaCierre
+SinPenalizacion ..|> TablaPuntos
+FinEnUnaRonda ..|> PoliticaFinPartida
+ReglaClasicaPlugin ..> CierreClasico433 : <<create>>
+CierreClasico433 ..> comb : particiones()\nmejor_cobertura()
+
+ReglaApuntadoPlugin ..|> VariantePlugin
+CierreApuntado ..|> ReglaCierre
+TablaPuntosEstandar ..|> TablaPuntos
+UmbralEliminacion ..|> PoliticaFinPartida
+ReglaApuntadoPlugin ..> CierreApuntado : <<create>>
+CierreApuntado --> TablaPuntosEstandar
+CierreApuntado ..> comb : particiones()\nmejor_cobertura()
+
+PostgresRepositoryAdapter ..|> IRepositorioPartidas
+RepositorioEnMemoria ..|> IRepositorioPartidas
+
+note "Strategy: cada plug-in entrega su ReglaCierre,\nTablaPuntos y PoliticaFinPartida. El núcleo los\nobtiene con PluginRegistry.resolver(codigo); los\nplug-ins se descubren por entry points\n«juegocartas.variantes» y solo importan nucleo.contrato." as N1
+N1 .. PluginRegistry
+EvaluacionCierre -[hidden]down- ReglaClasicaPlugin
+Marcador -[hidden]down- ReglaApuntadoPlugin
+RoundScoring -[hidden]down- PostgresRepositoryAdapter
+PostgresRepositoryAdapter -[hidden]down- VariantePlugin
+@enduml

@@ -1,0 +1,92 @@
+@startuml secuencia_cierre_liquidacion
+' Intento de cierre de ronda y liquidación (Clásica y Apuntado) - Entregable 3
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam responseMessageBelowArrow true
+skinparam sequence {
+  ParticipantBorderColor #2F4A6D
+  ParticipantBackgroundColor #F7F9FC
+  LifeLineBorderColor #8A9BB3
+  ArrowColor #2F4A6D
+  GroupBorderColor #2F4A6D
+  GroupHeaderFontColor #2F4A6D
+}
+actor "Jugador\n(index.html)" as U
+participant "GameGateway\n(WS /ws)" as G
+participant "GameService" as S
+participant "TurnOrchestrator" as T
+participant "HandEvaluator" as E
+participant "plug-in\n(ReglaCierre)" as P
+participant "LiquidadorRonda\n(RoundScoring +\nMatchStandings)" as L
+participant "MatchRecord" as M
+participant "PostgresRepository\nAdapter" as R
+database "PostgreSQL 16" as DB
+
+U -> G : {"accion": "cerrar"} (WSS)
+G -> S : cerrar(codigo_sala, jugador)
+S -> T : solicitar_cierre(partida_id, jugador, mano)
+activate T
+note over T : candado de la partida (with estado.candado)\n_exigir(): jugador en turno y fase ESPERANDO_DESCARTE
+T -> E : evaluar_cierre(variante, config, mano)
+E -> E : PluginRegistry.resolver(variante)\n.regla_cierre(config)
+
+alt Escenario 1: Clásica (CLASICA_433 → CierreClasico433)
+  E -> P : evaluar(mano)
+  P -> P : particiones(mano, (4, 3, 3))\n11 cartas = 1 cuarta + 2 ternas + 1 descarte
+  P --> E : EvaluacionCierre(valida=True,\ntipo="CLASICO_433")
+  E --> T : evaluacion
+  T -> L : liquidar(partida_id, jugador, evaluacion)
+  L -> L : SinPenalizacion: penalizaciones = 0\nFinEnUnaRonda.evaluar() → terminada=True
+  L --> T : CierreRonda(partida_terminada=True,\nganador = quien cierra)
+  note right of T : Ronda ganada: en la Clásica\nla partida es de una sola ronda
+
+else Escenario 2: Apuntado (APUNTADO_101 → CierreApuntado)
+  E -> P : evaluar(mano)
+  P -> P : _completo(): particiones(mano, (3, 3, 4))\nsi no, _tocar(): particiones(mano, (3, 3, 3))\nsobrante sin la carta más alta < umbral_tocar (5)
+  P --> E : EvaluacionCierre(valida=True,\ntipo="TOCAR" | "COMPLETO" | "PINTAS")
+  E --> T : evaluacion
+  T -> L : liquidar(partida_id, jugador, evaluacion)
+  L -> L : PartidasEnCurso.ronda_en_curso()\ncartas_sueltas(mano_j, TablaPuntosEstandar.puntos)\npara cada jugador j ≠ quien cierra
+  L -> L : RoundScoring.penalizaciones()\nquien cierra: 0 (o bono_completo / bono_pintas)
+  L -> L : MatchStandings.actualizar(copia del marcador, deltas)\n→ UmbralEliminacion.evaluar(): ¿saldo ≥ 101?
+  alt quedan 2 o más jugadores con saldo < 101
+    L --> T : CierreRonda(eliminados, partida_terminada=False)
+  else queda un solo jugador vivo (o desempate R-11)
+    L --> T : CierreRonda(eliminados, partida_terminada=True, ganador)
+  end
+
+else Cierre rechazado (cualquier variante)
+  E -> P : evaluar(mano)
+  P --> E : EvaluacionCierre(valida=False, motivo_rechazo)
+  E --> T : evaluacion
+  T --> S : evaluacion (no se liquida ni se publica nada)
+  deactivate T
+  S -> M : anotar_jugada(SOLICITAR_CIERRE, motivo)
+  M -> R : anotar_jugada(jugada)
+  R -> DB : INSERT turno_jugada (resultado RECHAZADA)
+  S --> G : ErrorSala("No puedes cerrar todavía. " + motivo)
+  G --> U : {"tipo": "error", "mensaje": "... Te quedan 7 puntos sueltos (5♥ y 2♣) ..."}
+  note over U, G : El jugador sigue en su turno (fase ESPERANDO_DESCARTE)
+end
+
+== Solo si el cierre fue válido (Escenarios 1 y 2) ==
+activate T
+T -> M : registrar_ronda(cierre)
+M -> R : liquidar_ronda(cierre)
+R -> DB : BEGIN
+R -> DB : SELECT estado FROM ronda ... FOR UPDATE
+R -> DB : INSERT turno_jugada; UPDATE ronda → LIQUIDADA\nINSERT puntaje_ronda; UPDATE puntaje_acumulado\nUPDATE participacion (ELIMINADO); UPDATE partida (FINALIZADA)
+R -> DB : COMMIT
+T -> T : fase = FINALIZADO\nLocalEventBus.publicar(RondaLiquidada)
+T -> S : _al_liquidar(evento)
+alt cierre.partida_terminada
+  S -> S : marcador.aplicar(); ganador\npublicar(PartidaFinalizada)
+else la partida sigue (Apuntado)
+  S -> S : marcador.aplicar(); _siguiente_ronda()\n(reparte y abre la ronda N+1)
+end
+T --> S : evaluacion (valida)
+deactivate T
+S --> G : (sin error)
+G --> U : {"tipo": "estado", ...vista} a cada jugador\n(resumen de la ronda, marcador, ganador)
+@enduml

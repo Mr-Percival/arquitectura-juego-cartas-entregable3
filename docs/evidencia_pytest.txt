@@ -1,59 +1,186 @@
-============================= test session starts =============================
-platform win32 -- Python 3.12.2, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable2\.venv\Scripts\python.exe
-cachedir: .pytest_cache
-rootdir: C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable2
-configfile: pyproject.toml
-plugins: platformdirs-4.13.3
-collecting ... collected 49 items
+Evidencia de pruebas y métricas, corrida local del 2026-11-26 (Windows 11, Python 3.12.2)
+Comandos: .venv\Scripts\python -m pytest -v   y   .venv\Scripts\python herramientas/metricas.py --exigir
+Commit: 5b2427e (main). La suite de integración con PostgreSQL corrió con pgserver (PostgreSQL 16 embebido), no se saltó.
+Resultado: 96 pruebas en verde (75,89 s); metricas.py --exigir terminó con código 0.
 
-tests/architecture/test_r1_aislamiento_capas.py::test_presentacion_no_accede_a_persistencia PASSED [  2%]
-tests/architecture/test_r1_aislamiento_capas.py::test_nucleo_no_depende_de_persistencia PASSED [  4%]
-tests/architecture/test_r1_aislamiento_capas.py::test_nucleo_no_depende_de_presentacion PASSED [  6%]
-tests/architecture/test_r1_aislamiento_capas.py::test_ningun_modulo_interno_importa_el_adaptador_de_persistencia PASSED [  8%]
-tests/architecture/test_r1_aislamiento_capas.py::test_solo_persistencia_importa_el_driver_de_base_de_datos PASSED [ 10%]
-tests/architecture/test_r1_aislamiento_capas.py::test_reglas_y_puntuacion_no_dependen_de_la_orquestacion PASSED [ 12%]
-tests/architecture/test_r2_deteccion_violacion.py::test_r2_detecta_import_entre_plugins PASSED [ 14%]
-tests/architecture/test_r2_independencia_reglas.py::test_clasica_no_depende_de_apuntado PASSED [ 16%]
-tests/architecture/test_r2_independencia_reglas.py::test_apuntado_no_depende_de_clasica PASSED [ 18%]
-tests/architecture/test_r2_independencia_reglas.py::test_plugins_solo_importan_el_contrato PASSED [ 20%]
-tests/architecture/test_r2_independencia_reglas.py::test_nucleo_no_conoce_plugins_concretos PASSED [ 22%]
-tests/architecture/test_r2_independencia_reglas.py::test_orquestador_no_conoce_reglas_ni_datos PASSED [ 24%]
-tests/architecture/test_r4_sin_ciclos.py::test_grafo_de_componentes_es_aciclico PASSED [ 26%]
-tests/architecture/test_r4_sin_ciclos.py::test_el_detector_encuentra_ciclos PASSED [ 28%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\contrato\\combinaciones.py] PASSED [ 30%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\evaluacion\\evaluador.py] PASSED [ 32%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\evaluacion\\__init__.py] PASSED [ 34%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\__init__.py] PASSED [ 36%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\apuntado\\plugin.py] PASSED [ 38%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\apuntado\\__init__.py] PASSED [ 40%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\clasica\\plugin.py] PASSED [ 42%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\clasica\\__init__.py] PASSED [ 44%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_todo_el_codigo_cc_maximo_15 PASSED [ 46%]
-tests/architecture/test_r5_complejidad_ciclomatica.py::test_radon_detecta_un_metodo_complejo PASSED [ 48%]
-tests/architecture/test_r7_contrato_plugins.py::test_se_descubren_las_dos_variantes PASSED [ 51%]
-tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[APUNTADO_101] PASSED [ 53%]
-tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[CLASICA_433] PASSED [ 55%]
-tests/architecture/test_r7_contrato_plugins.py::test_escalera_misma_pinta_si_y_pintas_mezcladas_no PASSED [ 57%]
-tests/architecture/test_r7_contrato_plugins.py::test_clasica_acepta_cuarta_dos_ternas_y_descarte PASSED [ 59%]
-tests/architecture/test_r7_contrato_plugins.py::test_apuntado_rechaza_tocar_con_sobrante_de_7 PASSED [ 61%]
-tests/architecture/test_r7_contrato_plugins.py::test_variante_nueva_se_registra_sin_tocar_el_nucleo PASSED [ 63%]
-tests/architecture/test_r7_contrato_plugins.py::test_plugin_con_contrato_de_otra_version_mayor_se_rechaza PASSED [ 65%]
-tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[CLASICA_433] PASSED [ 67%]
-tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[APUNTADO_101] PASSED [ 69%]
-tests/architecture/test_r9_orquestacion_cierre.py::test_publica_despues_de_persistir PASSED [ 71%]
-tests/architecture/test_r9_orquestacion_cierre.py::test_no_publica_si_la_persistencia_falla PASSED [ 73%]
-tests/architecture/test_r9_orquestacion_cierre.py::test_dos_cierres_simultaneos_solo_uno_persiste PASSED [ 75%]
-tests/architecture/test_r9_orquestacion_cierre.py::test_jugador_fuera_de_turno_es_rechazado PASSED [ 77%]
-tests/integracion/test_persistencia_postgres.py::test_catalogo_de_54_cartas PASSED [ 79%]
-tests/integracion/test_persistencia_postgres.py::test_partida_multironda_apuntado_acumula_hasta_101 PASSED [ 81%]
-tests/integracion/test_persistencia_postgres.py::test_partida_clasica_es_atomica_de_una_ronda PASSED [ 83%]
-tests/integracion/test_persistencia_postgres.py::test_dos_cierres_simultaneos_solo_uno_gana PASSED [ 85%]
-tests/integracion/test_persistencia_postgres.py::test_fallo_a_mitad_del_cierre_no_deja_escrituras_parciales PASSED [ 87%]
-tests/integracion/test_persistencia_postgres.py::test_no_puede_haber_dos_rondas_abiertas PASSED [ 89%]
-tests/unidad/test_apuntado_fin_partida.py::test_queda_un_solo_vivo_y_gana PASSED [ 91%]
-tests/unidad/test_apuntado_fin_partida.py::test_todos_los_vivos_llegan_a_101_en_la_misma_ronda_gana_el_de_menor_saldo PASSED [ 93%]
-tests/unidad/test_apuntado_fin_partida.py::test_un_eliminado_de_una_ronda_anterior_no_puede_ganar_el_desempate PASSED [ 95%]
-tests/unidad/test_apuntado_fin_partida.py::test_empate_exacto_gana_el_primero_en_el_orden_del_marcador PASSED [ 97%]
+=== pytest -v ===
+============================= test session starts =============================
+platform win32 -- Python 3.12.2, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable3\juego\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable3\juego
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1, platformdirs-4.14.0
+collecting ... collected 96 items
+
+tests/architecture/test_r1_aislamiento_capas.py::test_presentacion_no_accede_a_persistencia PASSED [  1%]
+tests/architecture/test_r1_aislamiento_capas.py::test_nucleo_no_depende_de_persistencia PASSED [  2%]
+tests/architecture/test_r1_aislamiento_capas.py::test_nucleo_no_depende_de_presentacion PASSED [  3%]
+tests/architecture/test_r1_aislamiento_capas.py::test_ningun_modulo_interno_importa_el_adaptador_de_persistencia PASSED [  4%]
+tests/architecture/test_r1_aislamiento_capas.py::test_solo_persistencia_importa_el_driver_de_base_de_datos PASSED [  5%]
+tests/architecture/test_r1_aislamiento_capas.py::test_reglas_y_puntuacion_no_dependen_de_la_orquestacion PASSED [  6%]
+tests/architecture/test_r2_deteccion_violacion.py::test_r2_detecta_import_entre_plugins PASSED [  7%]
+tests/architecture/test_r2_independencia_reglas.py::test_clasica_no_depende_de_apuntado PASSED [  8%]
+tests/architecture/test_r2_independencia_reglas.py::test_apuntado_no_depende_de_clasica PASSED [  9%]
+tests/architecture/test_r2_independencia_reglas.py::test_plugins_solo_importan_el_contrato PASSED [ 10%]
+tests/architecture/test_r2_independencia_reglas.py::test_nucleo_no_conoce_plugins_concretos PASSED [ 11%]
+tests/architecture/test_r2_independencia_reglas.py::test_orquestador_no_conoce_reglas_ni_datos PASSED [ 12%]
+tests/architecture/test_r4_sin_ciclos.py::test_grafo_de_componentes_es_aciclico PASSED [ 13%]
+tests/architecture/test_r4_sin_ciclos.py::test_el_detector_encuentra_ciclos PASSED [ 14%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\contrato\\combinaciones.py] PASSED [ 15%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\evaluacion\\evaluador.py] PASSED [ 16%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[nucleo\\evaluacion\\__init__.py] PASSED [ 17%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\__init__.py] PASSED [ 18%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\apuntado\\plugin.py] PASSED [ 19%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\apuntado\\__init__.py] PASSED [ 20%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\clasica\\plugin.py] PASSED [ 21%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_evaluadores_cc_maximo_10[plugins\\clasica\\__init__.py] PASSED [ 22%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_todo_el_codigo_cc_maximo_15 PASSED [ 23%]
+tests/architecture/test_r5_complejidad_ciclomatica.py::test_radon_detecta_un_metodo_complejo PASSED [ 25%]
+tests/architecture/test_r7_contrato_plugins.py::test_se_descubren_las_dos_variantes PASSED [ 26%]
+tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[APUNTADO_101] PASSED [ 27%]
+tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[CLASICA_433] PASSED [ 28%]
+tests/architecture/test_r7_contrato_plugins.py::test_escalera_misma_pinta_si_y_pintas_mezcladas_no PASSED [ 29%]
+tests/architecture/test_r7_contrato_plugins.py::test_clasica_acepta_cuarta_dos_ternas_y_descarte PASSED [ 30%]
+tests/architecture/test_r7_contrato_plugins.py::test_apuntado_rechaza_tocar_con_sobrante_de_7 PASSED [ 31%]
+tests/architecture/test_r7_contrato_plugins.py::test_variante_nueva_se_registra_sin_tocar_el_nucleo PASSED [ 32%]
+tests/architecture/test_r7_contrato_plugins.py::test_plugin_con_contrato_de_otra_version_mayor_se_rechaza PASSED [ 33%]
+tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[CLASICA_433] PASSED [ 34%]
+tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[APUNTADO_101] PASSED [ 35%]
+tests/architecture/test_r9_orquestacion_cierre.py::test_publica_despues_de_persistir PASSED [ 36%]
+tests/architecture/test_r9_orquestacion_cierre.py::test_no_publica_si_la_persistencia_falla PASSED [ 37%]
+tests/architecture/test_r9_orquestacion_cierre.py::test_dos_cierres_simultaneos_solo_uno_persiste PASSED [ 38%]
+tests/architecture/test_r9_orquestacion_cierre.py::test_jugador_fuera_de_turno_es_rechazado PASSED [ 39%]
+tests/integracion/test_persistencia_postgres.py::test_catalogo_de_54_cartas PASSED [ 40%]
+tests/integracion/test_persistencia_postgres.py::test_partida_multironda_apuntado_acumula_hasta_101 PASSED [ 41%]
+tests/integracion/test_persistencia_postgres.py::test_partida_clasica_es_atomica_de_una_ronda PASSED [ 42%]
+tests/integracion/test_persistencia_postgres.py::test_dos_cierres_simultaneos_solo_uno_gana PASSED [ 43%]
+tests/integracion/test_persistencia_postgres.py::test_fallo_a_mitad_del_cierre_no_deja_escrituras_parciales PASSED [ 44%]
+tests/integracion/test_persistencia_postgres.py::test_no_puede_haber_dos_rondas_abiertas PASSED [ 45%]
+tests/integracion/test_persistencia_postgres.py::test_partida_del_mvp_queda_en_la_base_con_su_bitacora PASSED [ 46%]
+tests/mvp/test_analisis_mano.py::test_codigos_ida_y_vuelta PASSED        [ 47%]
+tests/mvp/test_analisis_mano.py::test_cobertura_minimiza_los_puntos_sueltos PASSED [ 48%]
+tests/mvp/test_analisis_mano.py::test_cobertura_usa_el_comodin_para_llenar_un_hueco PASSED [ 50%]
+tests/mvp/test_analisis_mano.py::test_con_11_cartas_se_cuenta_sin_la_suelta_mas_alta PASSED [ 51%]
+tests/mvp/test_h1_salas.py::test_crear_sala_da_un_codigo_para_compartir PASSED [ 52%]
+tests/mvp/test_h1_salas.py::test_entran_hasta_cuatro_con_el_codigo_sin_importar_mayusculas PASSED [ 53%]
+tests/mvp/test_h1_salas.py::test_el_quinto_no_entra PASSED               [ 54%]
+tests/mvp/test_h1_salas.py::test_dos_uniones_simultaneas_por_el_ultimo_puesto_solo_entra_una PASSED [ 55%]
+tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[ZZZZZZ] PASSED     [ 56%]
+tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[] PASSED           [ 57%]
+tests/mvp/test_h1_salas.py::test_nombre_repetido_o_vacio PASSED          [ 58%]
+tests/mvp/test_h1_salas.py::test_solo_el_anfitrion_empieza_y_con_al_menos_dos PASSED [ 59%]
+tests/mvp/test_h1_salas.py::test_modalidad_inexistente PASSED            [ 60%]
+tests/mvp/test_h2_turno.py::test_reparto_inicial PASSED                  [ 61%]
+tests/mvp/test_h2_turno.py::test_cada_jugador_ve_solo_su_mano PASSED     [ 62%]
+tests/mvp/test_h2_turno.py::test_turno_completo_robar_del_pozo_y_descartar PASSED [ 63%]
+tests/mvp/test_h2_turno.py::test_lo_robado_del_mazo_no_lo_ven_los_demas PASSED [ 64%]
+tests/mvp/test_h2_turno.py::test_fuera_de_turno_no_se_juega PASSED       [ 65%]
+tests/mvp/test_h2_turno.py::test_robar_dos_veces_se_rechaza_con_mensaje PASSED [ 66%]
+tests/mvp/test_h2_turno.py::test_descartar_sin_robar_se_rechaza_con_mensaje PASSED [ 67%]
+tests/mvp/test_h2_turno.py::test_descartar_una_carta_ajena_no_cambia_el_turno PASSED [ 68%]
+tests/mvp/test_h2_turno.py::test_el_turno_rota_y_vuelve_al_primero PASSED [ 69%]
+tests/mvp/test_h2_turno.py::test_jugar_antes_de_empezar PASSED           [ 70%]
+tests/mvp/test_h2_turno.py::test_mazo_agotado_se_rebaraja_el_pozo PASSED [ 71%]
+tests/mvp/test_h2_websocket.py::test_partida_entre_dos_conexiones PASSED [ 72%]
+tests/mvp/test_h2_websocket.py::test_reconexion_con_el_token PASSED      [ 73%]
+tests/mvp/test_h3_cierre_clasica.py::test_cuarta_dos_ternas_y_descarte_gana PASSED [ 75%]
+tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 7D 3C 4C 5C KS KH 9D 2D QC-Te falta 1 cuarta. Tienes 2 ternas] PASSED [ 76%]
+tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 7D 7C 3C 4C 5C KS 9H 2D QC-Te falta 1 terna. Tienes 1 cuarta y 1 terna] PASSED [ 77%]
+tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 2C 4C 6C KS QH 9D 2D 5H AS-Te faltan 1 cuarta y 2 ternas. No tienes ninguna combinaci\xf3n] PASSED [ 78%]
+tests/mvp/test_h3_cierre_clasica.py::test_no_se_cierra_sin_robar_ni_fuera_de_turno PASSED [ 79%]
+tests/mvp/test_h3_cierre_clasica.py::test_el_anfitrion_puede_empezar_otra_partida PASSED [ 80%]
+tests/mvp/test_h3_cierre_clasica.py::test_si_no_se_puede_guardar_nada_cambia_y_se_puede_reintentar PASSED [ 81%]
+tests/mvp/test_h4_apuntado.py::test_tocar_con_menos_de_5_cierra_y_a_los_demas_se_les_suman_sus_sueltas PASSED [ 82%]
+tests/mvp/test_h4_apuntado.py::test_sobrante_de_exactamente_5_se_rechaza PASSED [ 83%]
+tests/mvp/test_h4_apuntado.py::test_sobrante_mayor_y_ternas_que_faltan_tambien_se_explican PASSED [ 84%]
+tests/mvp/test_h4_apuntado.py::test_ganar_completo_abona_el_bono PASSED  [ 85%]
+tests/mvp/test_h4_apuntado.py::test_despues_de_cerrar_se_reparte_otra_ronda_y_la_abre_el_siguiente PASSED [ 86%]
+tests/mvp/test_h4_apuntado.py::test_quien_llega_a_101_sale_y_la_partida_sigue_con_los_demas PASSED [ 87%]
+tests/mvp/test_h4_apuntado.py::test_cuando_queda_uno_solo_la_partida_declara_ganador PASSED [ 88%]
+tests/mvp/test_h4_apuntado.py::test_el_cierre_queda_en_el_registro PASSED [ 89%]
+tests/mvp/test_h5_reconexion.py::test_al_refrescar_vuelve_a_su_mano_y_a_su_turno_a_mitad_de_jugada PASSED [ 90%]
+tests/mvp/test_h5_reconexion.py::test_los_demas_ven_quien_esta_sin_conexion_y_cuando_vuelve PASSED [ 91%]
+tests/mvp/test_h5_reconexion.py::test_si_abre_otra_pestana_la_anterior_se_entera PASSED [ 92%]
+tests/mvp/test_h6_bitacora.py::test_la_ronda_queda_registrada_jugada_por_jugada PASSED [ 93%]
+tests/mvp/test_h6_bitacora.py::test_se_descarga_como_csv PASSED          [ 94%]
+tests/unidad/test_apuntado_fin_partida.py::test_queda_un_solo_vivo_y_gana PASSED [ 95%]
+tests/unidad/test_apuntado_fin_partida.py::test_todos_los_vivos_llegan_a_101_en_la_misma_ronda_gana_el_de_menor_saldo PASSED [ 96%]
+tests/unidad/test_apuntado_fin_partida.py::test_un_eliminado_de_una_ronda_anterior_no_puede_ganar_el_desempate PASSED [ 97%]
+tests/unidad/test_apuntado_fin_partida.py::test_empate_exacto_gana_el_primero_en_el_orden_del_marcador PASSED [ 98%]
 tests/unidad/test_apuntado_fin_partida.py::test_la_partida_sigue_si_quedan_dos_o_mas_vivos PASSED [100%]
 
-============================= 49 passed in 36.19s =============================
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable3\juego\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 96 passed, 1 warning in 75.89s (0:01:15) ===================
+
+=== herramientas/metricas.py --exigir ===
+# Métricas estructurales del MVP
+
+| Componente | Ca | Ce | I | A | D | Zona | Deméter |
+|---|---:|---:|---:|---:|---:|---|---:|
+| arranque | 0 | 9 | 1.00 | 0.00 | 0.00 | cerca de la secuencia principal | 0 |
+| nucleo.contrato | 8 | 0 | 0.00 | 0.36 | 0.64 | zona del dolor (estable y concreto) | 0 |
+| nucleo.evaluacion | 1 | 1 | 0.50 | 0.50 | 0.00 | cerca de la secuencia principal | 1 |
+| nucleo.partida | 2 | 5 | 0.71 | 0.50 | 0.21 | cerca de la secuencia principal | 5 |
+| nucleo.puntuacion | 2 | 2 | 0.50 | 0.33 | 0.17 | cerca de la secuencia principal | 4 |
+| nucleo.registro | 1 | 1 | 0.50 | 0.00 | 0.50 | zona del dolor (estable y concreto) | 0 |
+| nucleo.sala | 3 | 1 | 0.25 | 0.29 | 0.46 | zona del dolor (estable y concreto) | 1 |
+| nucleo.soporte | 6 | 0 | 0.00 | 0.14 | 0.86 | zona del dolor (estable y concreto) | 0 |
+| nucleo.turno | 3 | 2 | 0.40 | 0.33 | 0.27 | cerca de la secuencia principal | 0 |
+| persistencia | 1 | 1 | 0.50 | 0.00 | 0.50 | zona del dolor (estable y concreto) | 0 |
+| plugins.apuntado | 0 | 1 | 1.00 | 0.00 | 0.00 | cerca de la secuencia principal | 0 |
+| plugins.clasica | 0 | 1 | 1.00 | 0.00 | 0.00 | cerca de la secuencia principal | 0 |
+| presentacion | 1 | 4 | 0.80 | 0.33 | 0.13 | cerca de la secuencia principal | 0 |
+
+## Complejidad ciclomática (radon)
+
+- Bloques medidos: 241; promedio 2.32; máximo 10.
+- Evaluación de ternas, cuartas y cierres: 42 bloques, promedio 3.24, máximo 10 (umbral 10, deseable < 5).
+
+| Archivo | Bloque | CC |
+|---|---|---:|
+| plugins/clasica/plugin.py | CierreClasico433._que_falta | 10 |
+| nucleo/contrato/combinaciones.py | es_escalera | 9 |
+| nucleo/puntuacion/liquidador.py | LiquidadorRonda.liquidar | 9 |
+| nucleo/contrato/combinaciones.py | particiones | 8 |
+| nucleo/partida/servicio.py | GameService.vista | 8 |
+| nucleo/partida/servicio.py | GameService._analizar | 8 |
+| plugins/apuntado/plugin.py | UmbralEliminacion.evaluar | 8 |
+| plugins/clasica/plugin.py | CierreClasico433 | 8 |
+| persistencia/postgres.py | PostgresRepositoryAdapter.liquidar_ronda | 7 |
+| nucleo/contrato/combinaciones.py | mejor_cobertura | 7 |
+
+## Ley de Deméter: llamadas encadenadas a objetos ajenos
+
+- `nucleo/evaluacion/evaluador.py:23`: `self._registro.resolver(variante).regla_cierre`
+- `nucleo/partida/servicio.py:162`: `self._variantes.resolver(partida.variante).tabla_puntos`
+- `nucleo/partida/servicio.py:178`: `self._salas.obtener(codigo_sala).codigo`
+- `nucleo/partida/servicio.py:228`: `self._variantes.resolver(sala.variante).tabla_puntos`
+- `nucleo/partida/servicio.py:239`: `self._salas.obtener(codigo_sala).codigo`
+- `nucleo/partida/servicio.py:124`: `self._salas.obtener(codigo_sala).codigo`
+- `nucleo/puntuacion/liquidador.py:25`: `self._registro.resolver(variante).tabla_puntos`
+- `nucleo/puntuacion/liquidador.py:38`: `self._registro.resolver(variante).politica_fin(config).evaluar`
+- `nucleo/puntuacion/liquidador.py:78`: `self._registro.resolver(ronda.variante).tabla_puntos`
+- `nucleo/puntuacion/liquidador.py:38`: `self._registro.resolver(variante).politica_fin`
+- `nucleo/sala/configuracion.py:23`: `self._registro.resolver(variante).esquema_configuracion`
+
+## Dependencias entre componentes (Ce)
+
+- **arranque** → nucleo.evaluacion, nucleo.partida, nucleo.puntuacion, nucleo.registro, nucleo.sala, nucleo.soporte, nucleo.turno, persistencia, presentacion
+- **nucleo.contrato** → (ninguna)
+- **nucleo.evaluacion** → nucleo.contrato
+- **nucleo.partida** → nucleo.contrato, nucleo.puntuacion, nucleo.sala, nucleo.soporte, nucleo.turno
+- **nucleo.puntuacion** → nucleo.contrato, nucleo.soporte
+- **nucleo.registro** → nucleo.contrato
+- **nucleo.sala** → nucleo.contrato
+- **nucleo.soporte** → (ninguna)
+- **nucleo.turno** → nucleo.contrato, nucleo.soporte
+- **persistencia** → nucleo.soporte
+- **plugins.apuntado** → nucleo.contrato
+- **plugins.clasica** → nucleo.contrato
+- **presentacion** → nucleo.partida, nucleo.sala, nucleo.soporte, nucleo.turno

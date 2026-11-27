@@ -1,4 +1,4 @@
-"""Construye Entregable2.pdf a partir de Entregable2.html con el estilo de la plantilla de portada UN.
+"""Construye Entregable3.pdf a partir de Entregable3.html con el estilo de la plantilla de portada UN.
 
 Mismo proceso que el Entregable 1:
 1. Toma los títulos h1/h2 y genera la página CONTENIDO.
@@ -15,10 +15,10 @@ import subprocess
 import fitz  # PyMuPDF
 
 BASE = pathlib.Path(__file__).resolve().parent
-SRC = BASE / "Entregable2.html"
+SRC = BASE / "Entregable3.html"
 TMP_HTML = BASE / "build" / "_build.html"
 TMP_PDF = BASE / "build" / "_raw.pdf"
-OUT = BASE / "Entregable2.pdf"
+OUT = BASE / "Entregable3.pdf"
 SELLO = BASE / "build" / "sello_un.png"
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 PT = 72  # puntos por pulgada
