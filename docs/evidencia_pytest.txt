@@ -1,11 +1,11 @@
-# Evidencia: pytest -v y métricas, 2026-11-26 22:15, commit cfd9d81
+# Evidencia: pytest -v y métricas, 2026-11-26 23:36, commit d0a183c
 ============================= test session starts =============================
 platform win32 -- Python 3.12.2, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable3\juego\.venv\Scripts\python.exe
 cachedir: .pytest_cache
 rootdir: C:\Users\abuel\Unal\2026-2\Fund de Arqui de Soft\Entregable3\juego
 configfile: pyproject.toml
 plugins: anyio-4.15.1, platformdirs-4.14.0
-collecting ... collected 103 items
+collecting ... collected 104 items
 
 tests/architecture/test_r1_aislamiento_capas.py::test_presentacion_no_accede_a_persistencia PASSED [  0%]
 tests/architecture/test_r1_aislamiento_capas.py::test_nucleo_no_depende_de_persistencia PASSED [  1%]
@@ -33,14 +33,14 @@ tests/architecture/test_r5_complejidad_ciclomatica.py::test_todo_el_codigo_cc_ma
 tests/architecture/test_r5_complejidad_ciclomatica.py::test_radon_detecta_un_metodo_complejo PASSED [ 23%]
 tests/architecture/test_r7_contrato_plugins.py::test_se_descubren_las_dos_variantes PASSED [ 24%]
 tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[APUNTADO_101] PASSED [ 25%]
-tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[CLASICA_433] PASSED [ 26%]
-tests/architecture/test_r7_contrato_plugins.py::test_escalera_misma_pinta_si_y_pintas_mezcladas_no PASSED [ 27%]
-tests/architecture/test_r7_contrato_plugins.py::test_clasica_acepta_cuarta_dos_ternas_y_descarte PASSED [ 28%]
-tests/architecture/test_r7_contrato_plugins.py::test_apuntado_rechaza_tocar_con_sobrante_de_7 PASSED [ 29%]
-tests/architecture/test_r7_contrato_plugins.py::test_variante_nueva_se_registra_sin_tocar_el_nucleo PASSED [ 30%]
-tests/architecture/test_r7_contrato_plugins.py::test_plugin_con_contrato_de_otra_version_mayor_se_rechaza PASSED [ 31%]
-tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[CLASICA_433] PASSED [ 32%]
-tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[APUNTADO_101] PASSED [ 33%]
+tests/architecture/test_r7_contrato_plugins.py::test_cada_plugin_cumple_el_contrato[CLASICA_433] PASSED [ 25%]
+tests/architecture/test_r7_contrato_plugins.py::test_escalera_misma_pinta_si_y_pintas_mezcladas_no PASSED [ 26%]
+tests/architecture/test_r7_contrato_plugins.py::test_clasica_acepta_cuarta_dos_ternas_y_descarte PASSED [ 27%]
+tests/architecture/test_r7_contrato_plugins.py::test_apuntado_rechaza_tocar_con_sobrante_de_7 PASSED [ 28%]
+tests/architecture/test_r7_contrato_plugins.py::test_variante_nueva_se_registra_sin_tocar_el_nucleo PASSED [ 29%]
+tests/architecture/test_r7_contrato_plugins.py::test_plugin_con_contrato_de_otra_version_mayor_se_rechaza PASSED [ 30%]
+tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[CLASICA_433] PASSED [ 31%]
+tests/architecture/test_r8_rendimiento_evaluador.py::test_p95_evaluar_cierre_menor_a_50ms[APUNTADO_101] PASSED [ 32%]
 tests/architecture/test_r9_orquestacion_cierre.py::test_publica_despues_de_persistir PASSED [ 33%]
 tests/architecture/test_r9_orquestacion_cierre.py::test_no_publica_si_la_persistencia_falla PASSED [ 34%]
 tests/architecture/test_r9_orquestacion_cierre.py::test_dos_cierres_simultaneos_solo_uno_persiste PASSED [ 35%]
@@ -59,22 +59,22 @@ tests/mvp/test_analisis_mano.py::test_con_11_cartas_se_cuenta_sin_la_suelta_mas_
 tests/mvp/test_arranque_sin_base.py::test_sin_database_url_usa_memoria PASSED [ 48%]
 tests/mvp/test_arranque_sin_base.py::test_base_inalcanzable_arranca_en_memoria PASSED [ 49%]
 tests/mvp/test_h1_salas.py::test_crear_sala_da_un_codigo_para_compartir PASSED [ 50%]
-tests/mvp/test_h1_salas.py::test_entran_hasta_cuatro_con_el_codigo_sin_importar_mayusculas PASSED [ 51%]
-tests/mvp/test_h1_salas.py::test_el_quinto_no_entra PASSED               [ 52%]
-tests/mvp/test_h1_salas.py::test_dos_uniones_simultaneas_por_el_ultimo_puesto_solo_entra_una PASSED [ 53%]
-tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[ZZZZZZ] PASSED     [ 54%]
-tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[] PASSED           [ 55%]
-tests/mvp/test_h1_salas.py::test_nombre_repetido_o_vacio PASSED          [ 56%]
-tests/mvp/test_h1_salas.py::test_solo_el_anfitrion_empieza_y_con_al_menos_dos PASSED [ 57%]
-tests/mvp/test_h1_salas.py::test_modalidad_inexistente PASSED            [ 58%]
-tests/mvp/test_h2_turno.py::test_reparto_inicial PASSED                  [ 59%]
-tests/mvp/test_h2_turno.py::test_cada_jugador_ve_solo_su_mano PASSED     [ 60%]
-tests/mvp/test_h2_turno.py::test_turno_completo_robar_del_pozo_y_descartar PASSED [ 61%]
-tests/mvp/test_h2_turno.py::test_lo_robado_del_mazo_no_lo_ven_los_demas PASSED [ 62%]
-tests/mvp/test_h2_turno.py::test_fuera_de_turno_no_se_juega PASSED       [ 63%]
-tests/mvp/test_h2_turno.py::test_robar_dos_veces_se_rechaza_con_mensaje PASSED [ 64%]
-tests/mvp/test_h2_turno.py::test_descartar_sin_robar_se_rechaza_con_mensaje PASSED [ 65%]
-tests/mvp/test_h2_turno.py::test_descartar_una_carta_ajena_no_cambia_el_turno PASSED [ 66%]
+tests/mvp/test_h1_salas.py::test_entran_hasta_cuatro_con_el_codigo_sin_importar_mayusculas PASSED [ 50%]
+tests/mvp/test_h1_salas.py::test_el_quinto_no_entra PASSED               [ 51%]
+tests/mvp/test_h1_salas.py::test_dos_uniones_simultaneas_por_el_ultimo_puesto_solo_entra_una PASSED [ 52%]
+tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[ZZZZZZ] PASSED     [ 53%]
+tests/mvp/test_h1_salas.py::test_codigo_que_no_existe[] PASSED           [ 54%]
+tests/mvp/test_h1_salas.py::test_nombre_repetido_o_vacio PASSED          [ 55%]
+tests/mvp/test_h1_salas.py::test_solo_el_anfitrion_empieza_y_con_al_menos_dos PASSED [ 56%]
+tests/mvp/test_h1_salas.py::test_modalidad_inexistente PASSED            [ 57%]
+tests/mvp/test_h2_turno.py::test_reparto_inicial PASSED                  [ 58%]
+tests/mvp/test_h2_turno.py::test_cada_jugador_ve_solo_su_mano PASSED     [ 59%]
+tests/mvp/test_h2_turno.py::test_turno_completo_robar_del_pozo_y_descartar PASSED [ 60%]
+tests/mvp/test_h2_turno.py::test_lo_robado_del_mazo_no_lo_ven_los_demas PASSED [ 61%]
+tests/mvp/test_h2_turno.py::test_fuera_de_turno_no_se_juega PASSED       [ 62%]
+tests/mvp/test_h2_turno.py::test_robar_dos_veces_se_rechaza_con_mensaje PASSED [ 63%]
+tests/mvp/test_h2_turno.py::test_descartar_sin_robar_se_rechaza_con_mensaje PASSED [ 64%]
+tests/mvp/test_h2_turno.py::test_descartar_una_carta_ajena_no_cambia_el_turno PASSED [ 65%]
 tests/mvp/test_h2_turno.py::test_el_turno_rota_y_vuelve_al_primero PASSED [ 66%]
 tests/mvp/test_h2_turno.py::test_jugar_antes_de_empezar PASSED           [ 67%]
 tests/mvp/test_h2_turno.py::test_mazo_agotado_se_rebaraja_el_pozo PASSED [ 68%]
@@ -85,26 +85,27 @@ tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 7
 tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 7D 7C 3C 4C 5C KS 9H 2D QC-Te falta 1 terna. Tienes 1 cuarta y 1 terna] PASSED [ 73%]
 tests/mvp/test_h3_cierre_clasica.py::test_cierre_invalido_dice_que_falta[7H 7S 2C 4C 6C KS QH 9D 2D 5H AS-Te faltan 1 cuarta y 2 ternas. No tienes ninguna combinaci\xf3n] PASSED [ 74%]
 tests/mvp/test_h3_cierre_clasica.py::test_no_se_cierra_sin_robar_ni_fuera_de_turno PASSED [ 75%]
-tests/mvp/test_h3_cierre_clasica.py::test_el_anfitrion_puede_empezar_otra_partida PASSED [ 76%]
-tests/mvp/test_h3_cierre_clasica.py::test_si_no_se_puede_guardar_nada_cambia_y_se_puede_reintentar PASSED [ 77%]
-tests/mvp/test_h4_apuntado.py::test_tocar_con_menos_de_5_cierra_y_a_los_demas_se_les_suman_sus_sueltas PASSED [ 78%]
-tests/mvp/test_h4_apuntado.py::test_sobrante_de_exactamente_5_se_rechaza PASSED [ 79%]
-tests/mvp/test_h4_apuntado.py::test_sobrante_mayor_y_ternas_que_faltan_tambien_se_explican PASSED [ 80%]
-tests/mvp/test_h4_apuntado.py::test_ganar_completo_abona_el_bono PASSED  [ 81%]
-tests/mvp/test_h4_apuntado.py::test_despues_de_cerrar_se_reparte_otra_ronda_y_la_abre_el_siguiente PASSED [ 82%]
-tests/mvp/test_h4_apuntado.py::test_quien_llega_a_101_sale_y_la_partida_sigue_con_los_demas PASSED [ 83%]
-tests/mvp/test_h4_apuntado.py::test_cuando_queda_uno_solo_la_partida_declara_ganador PASSED [ 84%]
-tests/mvp/test_h4_apuntado.py::test_el_cierre_queda_en_el_registro PASSED [ 85%]
-tests/mvp/test_h5_reconexion.py::test_al_refrescar_vuelve_a_su_mano_y_a_su_turno_a_mitad_de_jugada PASSED [ 86%]
-tests/mvp/test_h5_reconexion.py::test_los_demas_ven_quien_esta_sin_conexion_y_cuando_vuelve PASSED [ 87%]
-tests/mvp/test_h5_reconexion.py::test_si_abre_otra_pestana_la_anterior_se_entera PASSED [ 88%]
-tests/mvp/test_h6_bitacora.py::test_la_ronda_queda_registrada_jugada_por_jugada PASSED [ 89%]
-tests/mvp/test_h6_bitacora.py::test_se_descarga_como_csv PASSED          [ 90%]
-tests/mvp/test_mejoras_validacion.py::test_la_vista_trae_las_reglas_del_plugin[CLASICA_433-cuarta] PASSED [ 91%]
-tests/mvp/test_mejoras_validacion.py::test_la_vista_trae_las_reglas_del_plugin[APUNTADO_101-101] PASSED [ 92%]
-tests/mvp/test_mejoras_validacion.py::test_avisa_que_ya_puede_cerrar PASSED [ 93%]
-tests/mvp/test_mejoras_validacion.py::test_avisa_que_falta_antes_de_intentar PASSED [ 94%]
-tests/mvp/test_mejoras_validacion.py::test_sin_la_carta_del_turno_no_se_evalua PASSED [ 95%]
+tests/mvp/test_h3_cierre_clasica.py::test_el_anfitrion_puede_empezar_otra_partida PASSED [ 75%]
+tests/mvp/test_h3_cierre_clasica.py::test_si_no_se_puede_guardar_nada_cambia_y_se_puede_reintentar PASSED [ 76%]
+tests/mvp/test_h4_apuntado.py::test_tocar_con_menos_de_5_cierra_y_a_los_demas_se_les_suman_sus_sueltas PASSED [ 77%]
+tests/mvp/test_h4_apuntado.py::test_sobrante_de_exactamente_5_se_rechaza PASSED [ 78%]
+tests/mvp/test_h4_apuntado.py::test_sobrante_mayor_y_ternas_que_faltan_tambien_se_explican PASSED [ 79%]
+tests/mvp/test_h4_apuntado.py::test_ganar_completo_abona_el_bono PASSED  [ 80%]
+tests/mvp/test_h4_apuntado.py::test_despues_de_cerrar_se_reparte_otra_ronda_y_la_abre_el_siguiente PASSED [ 81%]
+tests/mvp/test_h4_apuntado.py::test_quien_llega_a_101_sale_y_la_partida_sigue_con_los_demas PASSED [ 82%]
+tests/mvp/test_h4_apuntado.py::test_cuando_queda_uno_solo_la_partida_declara_ganador PASSED [ 83%]
+tests/mvp/test_h4_apuntado.py::test_el_cierre_queda_en_el_registro PASSED [ 84%]
+tests/mvp/test_h5_reconexion.py::test_al_refrescar_vuelve_a_su_mano_y_a_su_turno_a_mitad_de_jugada PASSED [ 85%]
+tests/mvp/test_h5_reconexion.py::test_los_demas_ven_quien_esta_sin_conexion_y_cuando_vuelve PASSED [ 86%]
+tests/mvp/test_h5_reconexion.py::test_si_abre_otra_pestana_la_anterior_se_entera PASSED [ 87%]
+tests/mvp/test_h6_bitacora.py::test_la_ronda_queda_registrada_jugada_por_jugada PASSED [ 88%]
+tests/mvp/test_h6_bitacora.py::test_se_descarga_como_csv PASSED          [ 89%]
+tests/mvp/test_mejoras_validacion.py::test_la_vista_trae_las_reglas_del_plugin[CLASICA_433-cuarta] PASSED [ 90%]
+tests/mvp/test_mejoras_validacion.py::test_la_vista_trae_las_reglas_del_plugin[APUNTADO_101-101] PASSED [ 91%]
+tests/mvp/test_mejoras_validacion.py::test_avisa_que_ya_puede_cerrar PASSED [ 92%]
+tests/mvp/test_mejoras_validacion.py::test_avisa_que_falta_antes_de_intentar PASSED [ 93%]
+tests/mvp/test_mejoras_validacion.py::test_sin_la_carta_del_turno_no_se_evalua PASSED [ 94%]
+tests/mvp/test_mejoras_validacion.py::test_bitacora_sin_la_sala_en_memoria_consulta_por_codigo PASSED [ 95%]
 tests/unidad/test_apuntado_fin_partida.py::test_queda_un_solo_vivo_y_gana PASSED [ 96%]
 tests/unidad/test_apuntado_fin_partida.py::test_todos_los_vivos_llegan_a_101_en_la_misma_ronda_gana_el_de_menor_saldo PASSED [ 97%]
 tests/unidad/test_apuntado_fin_partida.py::test_un_eliminado_de_una_ronda_anterior_no_puede_ganar_el_desempate PASSED [ 98%]
@@ -117,7 +118,7 @@ tests/unidad/test_apuntado_fin_partida.py::test_la_partida_sigue_si_quedan_dos_o
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-================== 103 passed, 1 warning in 67.87s (0:01:07) ==================
+================== 104 passed, 1 warning in 68.53s (0:01:08) ==================
 
 # Métricas estructurales del MVP
 
@@ -139,7 +140,7 @@ tests/unidad/test_apuntado_fin_partida.py::test_la_partida_sigue_si_quedan_dos_o
 
 ## Complejidad ciclomática (radon)
 
-- Bloques medidos: 241; promedio 2.34; máximo 12.
+- Bloques medidos: 241; promedio 2.35; máximo 12.
 - Evaluación de ternas, cuartas y cierres: 42 bloques, promedio 3.24, máximo 10 (umbral 10, deseable < 5).
 
 | Archivo | Bloque | CC |
@@ -160,12 +161,12 @@ tests/unidad/test_apuntado_fin_partida.py::test_la_partida_sigue_si_quedan_dos_o
 - `arranque.py:50`: `logging.getLogger(__name__).exception`
 - `nucleo/evaluacion/evaluador.py:23`: `self._registro.resolver(variante).regla_cierre`
 - `nucleo/partida/servicio.py:162`: `self._variantes.resolver(partida.variante).tabla_puntos`
-- `nucleo/partida/servicio.py:178`: `self._salas.obtener(codigo_sala).codigo`
-- `nucleo/partida/servicio.py:229`: `self._variantes.resolver(sala.variante).tabla_puntos`
-- `nucleo/partida/servicio.py:245`: `self._salas.obtener(codigo_sala).codigo`
+- `nucleo/partida/servicio.py:235`: `self._variantes.resolver(sala.variante).tabla_puntos`
+- `nucleo/partida/servicio.py:251`: `self._salas.obtener(codigo_sala).codigo`
 - `nucleo/partida/servicio.py:124`: `self._salas.obtener(codigo_sala).codigo`
-- `nucleo/partida/servicio.py:234`: `self._variantes.resolver(sala.variante).regla_cierre(sala.config).eval`
-- `nucleo/partida/servicio.py:234`: `self._variantes.resolver(sala.variante).regla_cierre`
+- `nucleo/partida/servicio.py:179`: `self._salas.obtener(codigo_sala).codigo`
+- `nucleo/partida/servicio.py:240`: `self._variantes.resolver(sala.variante).regla_cierre(sala.config).eval`
+- `nucleo/partida/servicio.py:240`: `self._variantes.resolver(sala.variante).regla_cierre`
 - `nucleo/puntuacion/liquidador.py:25`: `self._registro.resolver(variante).tabla_puntos`
 - `nucleo/puntuacion/liquidador.py:38`: `self._registro.resolver(variante).politica_fin(config).evaluar`
 - `nucleo/puntuacion/liquidador.py:78`: `self._registro.resolver(ronda.variante).tabla_puntos`
